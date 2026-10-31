@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://proof-of-done.bongbonggg97.workers.dev/sitemap.xml

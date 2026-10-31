@@ -1,0 +1,13 @@
+name = "proof-of-done"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+
+[[kv_namespaces]]
+binding = "HITS"
+id = "c6c1e96528cf48a8aa13a6428c2cb6cb"

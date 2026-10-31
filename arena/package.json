@@ -1,0 +1,19 @@
+{
+  "name": "proof-of-done",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "demo": "bun src/demo.ts",
+    "grader-check": "bun src/grader.ts",
+    "testnet": "bun src/demo.ts --testnet",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "near-api-js": "^7.4.0",
+    "near-sandbox": "^0.3.4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  }
+}
