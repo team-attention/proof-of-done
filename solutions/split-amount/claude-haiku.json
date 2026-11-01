@@ -1,0 +1,10 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "recorded": "2026-11-01T10:23:51.939Z",
+  "seconds": 24,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "patch": "sha256:0e199991c0311c7b0d00eb672fa750ecf8ecf08738afc73fb097031419f0b3aa",
+  "last_reply": "ut.\n- **Leftover units:** the units left after flooring are handed out one each to the largest fractional remainders, with ties going to the lower index. That fixes the failing \"leftover unit goes to the first on a tie\" test, which now gives `[\"4\", \"3\", \"3\"]`.\n- **Validation:** it throws on an empty `weights`, a negative or non-integer weight, all-zero weights, or a `total` that isn't a string of digits.\n\nI also left a scratch directory at `/tmp/split-check/`. I couldn't remove it because the sandbox blocked the command. It is outside the repo and contains only the check script I wrote.\n\nCLAIM"
+}

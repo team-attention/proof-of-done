@@ -5,6 +5,7 @@
 // decide who was right.
 //
 //   bun src/demo.ts             local NEAR node (near-sandbox), about a minute
+//   --task split-amount         the second bounty (default parse-duration); see grader.ts TASKS
 //   bun src/demo.ts --testnet   same story on NEAR testnet; needs FUNDER_ID / FUNDER_KEY in .env.
 //                               Later runs reuse the arena and agents in .state/testnet.json, so the
 //                               on-chain leaderboard accumulates across rounds.
@@ -12,7 +13,7 @@ import { Account, JsonRpcProvider, KeyPair, type KeyPairString, nearToYocto, ter
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadRecord } from "./llm-agent";
-import { ROOT, TASK, graderCheck, hiddenTestsHash, runTests, sha256, solutionPath } from "./grader";
+import { ROOT, TASK, TASK_TITLE, graderCheck, hiddenTestsHash, runTests, sha256, solutionPath } from "./grader";
 
 const GAS = teraToGas("100");
 const near = (n: string) => BigInt(nearToYocto(n as `${number}`).toString());
@@ -28,15 +29,17 @@ const why = (e: unknown) => {
 
 export const REWARD = "1";
 export const MIN_STAKE = "0.2";
-/** Scripted agents differ only in what they ship and what they ask. `llm` agents decide for themselves. */
+/** Scripted agents differ only in what they ship and what they ask. `llm` agents decide for themselves.
+ *  An agent sits out a task that has no `solutions/<task>/<ships>.ts`. */
 export const AGENTS: { name: string; ask: string; stake: string; ships: string; note: string; llm?: boolean }[] = [
   { name: "cheapskate", ask: "0.5", stake: "0.3", ships: "visible-hardcode", note: "makes the failing visible test pass, fixes nothing" },
+  { name: "hasty", ask: "0.55", stake: "0.2", ships: "float-math", note: "a fix that looks right but does the math in Number" },
   { name: "quitter", ask: "0.6", stake: "0.2", ships: "noop", note: "could not fix it" },
   { name: "haiku", ask: "0.7", stake: "0.2", ships: "claude-haiku", note: "Claude Haiku wrote this patch and chose whether to claim", llm: true },
   { name: "codex", ask: "0.75", stake: "0.2", ships: "codex", note: "Codex wrote this patch and chose whether to claim", llm: true },
-  { name: "steady", ask: "0.8", stake: "0.2", ships: "honest", note: "fixes the parser" },
+  { name: "steady", ask: "0.8", stake: "0.2", ships: "honest", note: "ships the reference fix" },
   { name: "greedy", ask: "1.2", stake: "0.2", ships: "honest", note: "asks more than the reward" },
-];
+].filter((a) => existsSync(solutionPath(a.ships)));
 
 interface Bounty {
   id: number;
@@ -128,8 +131,8 @@ try {
     console.log(`  arena contract -> ${arenaId()}`);
   }
 
-  step(`client posts a ${REWARD} NEAR bounty: fix parseDuration`);
-  const posted = await call("client", "post_bounty", { title: "Fix parseDuration", spec: `tasks/${TASK}`, tests_hash: testsHash, grader_check: g.summary, min_stake: near(MIN_STAKE).toString() }, near(REWARD));
+  step(`client posts a ${REWARD} NEAR bounty: ${TASK_TITLE}`);
+  const posted = await call("client", "post_bounty", { title: TASK_TITLE, spec: `tasks/${TASK}`, tests_hash: testsHash, grader_check: g.summary, min_stake: near(MIN_STAKE).toString() }, near(REWARD));
   const bountyId = posted.id;
   console.log(`  bounty #${bountyId}, min stake ${MIN_STAKE} NEAR, asks capped at the reward`);
 

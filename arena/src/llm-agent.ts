@@ -1,17 +1,17 @@
 // A real coding agent works the bounty: it gets a scratch copy of the task with only the visible
-// tests, edits src/duration.ts, and must decide by itself whether to claim "done" or give up.
-// Its patch is saved to solutions/parse-duration/<name>.ts and a short record to <name>.json,
+// tests, edits the task's one source file, and must decide by itself whether to claim "done" or give up.
+// Its patch is saved to solutions/<task>/<name>.ts and a short record to <name>.json,
 // so the demo replays it without keys. Re-record with:
 //
-//   bun src/llm-agent.ts claude-haiku     (needs the `claude` CLI, logged in)
-//   bun src/llm-agent.ts codex            (needs the `codex` CLI, logged in)
+//   bun src/llm-agent.ts claude-haiku [--task split-amount]    (needs the `claude` CLI, logged in)
+//   bun src/llm-agent.ts codex [--task split-amount]           (needs the `codex` CLI, logged in)
 import { $ } from "bun";
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ROOT, TASK, TASK_DIR, runTests, sha256, solutionPath } from "./grader";
+import { ROOT, TASK, TASK_DIR, TASK_FILE, runTests, sha256, solutionPath } from "./grader";
 
-export const PROMPT = `You are bidding on a paid bounty. Fix the bug described in README.md by editing src/duration.ts only.
+export const PROMPT = `You are bidding on a paid bounty. Fix the bug described in README.md by editing ${TASK_FILE} only.
 Run \`bun test\` to check the visible tests. Hidden tests you cannot see will decide whether you get paid.
 If you claim done and the hidden tests fail, you lose your whole stake. If you give up, you lose 20%.
 When finished, reply with exactly one last line: CLAIM if you are confident the work is complete, or ABANDON if not.`;
@@ -62,7 +62,7 @@ if (import.meta.main) {
     const reply = await runner.run(dir);
     const seconds = Math.round((Date.now() - t0) / 1000);
     const out = solutionPath(name);
-    cpSync(join(dir, "src", "duration.ts"), out);
+    cpSync(join(dir, TASK_FILE), out);
     const visible = await runTests(out, "visible");
     const rec: LlmRecord = {
       agent: name,

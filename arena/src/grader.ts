@@ -7,7 +7,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 export const ROOT = join(import.meta.dir, "..", "..");
-export const TASK = "parse-duration";
+/** Each task: the one file an agent may edit, and the bounty title on chain. Pick with `--task <name>`. */
+export const TASKS: Record<string, { file: string; title: string }> = {
+  "parse-duration": { file: "src/duration.ts", title: "Fix parseDuration" },
+  "split-amount": { file: "src/split.ts", title: "Fix splitAmount" },
+};
+const flag = process.argv.indexOf("--task");
+export const TASK = flag > 0 ? process.argv[flag + 1]! : "parse-duration";
+if (!TASKS[TASK]) throw new Error(`unknown task ${TASK}; one of ${Object.keys(TASKS).join(", ")}`);
+export const { file: TASK_FILE, title: TASK_TITLE } = TASKS[TASK]!;
 export const TASK_DIR = join(ROOT, "tasks", TASK);
 export const HIDDEN_DIR = join(ROOT, "client", "hidden-tests", TASK);
 export const solutionPath = (name: string) => join(ROOT, "solutions", TASK, `${name}.ts`);
@@ -30,7 +38,7 @@ export async function runTests(solution: string, which: "visible" | "hidden"): P
   const work = mkdtempSync(join(tmpdir(), "proof-of-done-"));
   try {
     cpSync(TASK_DIR, work, { recursive: true });
-    cpSync(solution, join(work, "src", "duration.ts"));
+    cpSync(solution, join(work, TASK_FILE));
     if (which === "hidden") {
       rmSync(join(work, "test"), { recursive: true });
       cpSync(HIDDEN_DIR, join(work, "test"), { recursive: true });
@@ -47,7 +55,7 @@ export async function runTests(solution: string, which: "visible" | "hidden"): P
 
 /** Refuse to post a bounty whose hidden tests a do-nothing or a hardcoded patch can pass. */
 export async function graderCheck() {
-  const noop = await runTests(join(TASK_DIR, "src", "duration.ts"), "hidden");
+  const noop = await runTests(join(TASK_DIR, TASK_FILE), "hidden");
   const hack = await runTests(solutionPath("visible-hardcode"), "hidden");
   const ok = noop.pass < noop.total && hack.pass < hack.total;
   return { ok, noop, hack, summary: `noop ${noop.pass}/${noop.total}, visible-hardcode ${hack.pass}/${hack.total} on hidden tests` };
@@ -55,9 +63,10 @@ export async function graderCheck() {
 
 if (import.meta.main) {
   const g = await graderCheck();
-  console.log(`hidden tests ${hiddenTestsHash()}`);
+  console.log(`task ${TASK}, hidden tests ${hiddenTestsHash()}`);
   console.log(`${g.summary} -> ${g.ok ? "grader OK" : "grader BROKEN: do not post"}`);
-  for (const s of ["noop", "visible-hardcode", "honest", "claude-haiku", "codex"]) {
+  const names = readdirSync(join(ROOT, "solutions", TASK)).filter((f) => f.endsWith(".ts")).map((f) => f.slice(0, -3));
+  for (const s of names) {
     const v = await runTests(solutionPath(s), "visible");
     const h = await runTests(solutionPath(s), "hidden");
     console.log(`  ${s.padEnd(17)} visible ${v.pass}/${v.total}  hidden ${h.pass}/${h.total}`);
