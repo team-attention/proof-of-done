@@ -1,5 +1,8 @@
-// One bounty, four agents, one rule for all of them: run the visible tests on your own patch,
-// claim "done" if they pass, abandon if they don't. The hidden tests decide who was right.
+// One bounty, six agents. Four scripted agents follow one rule: run the visible tests on your own
+// patch, claim "done" if they pass, abandon if they don't. Two are real coding agents (Claude Haiku
+// via the Claude Code CLI, Codex via the Codex CLI) that wrote their own patch and made their own
+// claim-or-abandon call; the demo replays what they recorded (see llm-agent.ts). The hidden tests
+// decide who was right.
 //
 //   bun src/demo.ts             local NEAR node (near-sandbox), about a minute
 //   bun src/demo.ts --testnet   same story on NEAR testnet; needs FUNDER_ID / FUNDER_KEY in .env.
@@ -8,6 +11,7 @@
 import { Account, JsonRpcProvider, KeyPair, type KeyPairString, nearToYocto, teraToGas, yoctoToNear } from "near-api-js";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { loadRecord } from "./llm-agent";
 import { ROOT, TASK, graderCheck, hiddenTestsHash, runTests, sha256, solutionPath } from "./grader";
 
 const GAS = teraToGas("100");
@@ -24,13 +28,15 @@ const why = (e: unknown) => {
 
 export const REWARD = "1";
 export const MIN_STAKE = "0.2";
-/** Same rule for everyone; they differ only in what they ship and what they ask. */
-export const AGENTS = [
+/** Scripted agents differ only in what they ship and what they ask. `llm` agents decide for themselves. */
+export const AGENTS: { name: string; ask: string; stake: string; ships: string; note: string; llm?: boolean }[] = [
   { name: "cheapskate", ask: "0.5", stake: "0.3", ships: "visible-hardcode", note: "makes the failing visible test pass, fixes nothing" },
   { name: "quitter", ask: "0.6", stake: "0.2", ships: "noop", note: "could not fix it" },
+  { name: "haiku", ask: "0.7", stake: "0.2", ships: "claude-haiku", note: "Claude Haiku wrote this patch and chose whether to claim", llm: true },
+  { name: "codex", ask: "0.75", stake: "0.2", ships: "codex", note: "Codex wrote this patch and chose whether to claim", llm: true },
   { name: "steady", ask: "0.8", stake: "0.2", ships: "honest", note: "fixes the parser" },
   { name: "greedy", ask: "1.2", stake: "0.2", ships: "honest", note: "asks more than the reward" },
-] as const;
+];
 
 interface Bounty {
   id: number;
@@ -108,7 +114,11 @@ try {
     for (const k of Object.keys(ids)) accounts[k] = new Account(ids[k]!, rpc, keys[k] as KeyPairString);
     console.log(`  reusing arena ${arenaId()} and its agents`);
     await topUp("client", "1.25");
-    for (const a of AGENTS) await topUp(a.name, (Number(a.stake) + 0.15).toFixed(2));
+    for (const a of AGENTS) {
+      const min = (Number(a.stake) + 0.15).toFixed(2);
+      if (ids[a.name]) await topUp(a.name, min);
+      else await create(a.name, min);
+    }
   } else {
     await create("arena", testnet ? "2.3" : "5");
     await create("client", "1.25");
@@ -144,8 +154,11 @@ try {
     const file = solutionPath(agent.ships);
     const visible = await runTests(file, "visible");
     console.log(`  visible tests on its own patch: ${visible.pass}/${visible.total}`);
-    if (visible.pass < visible.total) {
-      b = await call(agent.name, "abandon", { id: bountyId, reason: `visible tests ${visible.pass}/${visible.total}` });
+    const rec = agent.llm ? loadRecord(agent.ships) : null;
+    if (rec) console.log(`  ${rec.model}, ${rec.seconds}s, recorded ${rec.recorded.slice(0, 10)}; its own call: ${rec.decision}`);
+    const claims = rec ? rec.decision === "CLAIM" : visible.pass === visible.total;
+    if (!claims) {
+      b = await call(agent.name, "abandon", { id: bountyId, reason: rec ? `agent said ${rec.decision}` : `visible tests ${visible.pass}/${visible.total}` });
       console.log(color.yellow(`  abandons before claiming -> keeps 80% of its stake`));
       continue;
     }

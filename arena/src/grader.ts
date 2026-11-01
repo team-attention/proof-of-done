@@ -57,7 +57,7 @@ if (import.meta.main) {
   const g = await graderCheck();
   console.log(`hidden tests ${hiddenTestsHash()}`);
   console.log(`${g.summary} -> ${g.ok ? "grader OK" : "grader BROKEN: do not post"}`);
-  for (const s of ["noop", "visible-hardcode", "honest"]) {
+  for (const s of ["noop", "visible-hardcode", "honest", "claude-haiku", "codex"]) {
     const v = await runTests(solutionPath(s), "visible");
     const h = await runTests(solutionPath(s), "hidden");
     console.log(`  ${s.padEnd(17)} visible ${v.pass}/${v.total}  hidden ${h.pass}/${h.total}`);
