@@ -1,0 +1,10 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "recorded": "2026-11-01T16:24:42.585Z",
+  "seconds": 35,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "patch": "sha256:9ef15fd0aa41587a9baa944d442af3d48d739c90751d9b96dfe941e3500d36e1",
+  "last_reply": " passes (3/3). The fix is one line: trailing zeros are still stripped, then the fraction is padded to two digits. Amounts with more significant decimals keep them, so `parseNear(formatNear(x)) === x` holds for every input.\n\nI read \"exactly two decimal places\" as \"at least two\" because \"never hides value\" and the round-trip rule can't both hold for amounts like `1.000000000000000000000001` NEAR under a strict two-digit rule. I didn't run extra spot checks: a sandbox approval prompt blocked my direct `bun -e` run, so the round-trip cases are verified by reading the code, not by execution.\n\nCLAIM"
+}

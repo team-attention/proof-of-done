@@ -1,0 +1,10 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "recorded": "2026-11-01T16:25:41.387Z",
+  "seconds": 28,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "patch": "sha256:1228abceb6827f734bdc5943fabef2e5873c68c564557ecd4e947ea3b0786a7d",
+  "last_reply": "onflict for amounts finer than 0.01 NEAR, such as 1 yocto. I took the reading that satisfies both: `1.5` becomes `1.50`, `2` becomes `2.00`, `0.25` stays `0.25`, and `1` yocto becomes `0.000000000000000000000001`. If the hidden tests expect fixed two decimals and accept lossy output for tiny amounts, this choice will fail them.\n\nI checked the edge cases by reading the code, since my direct `bun -e` spot check was blocked by a permission prompt. `0` gives `0.00`, and `10^24` gives `1.00`. Values near the `10^30` limit format as `1000000.00`. Each of these round-trips through `parseNear`.\n\nCLAIM"
+}

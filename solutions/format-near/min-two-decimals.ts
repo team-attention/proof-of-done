@@ -1,0 +1,13 @@
+// The other reading: at least two decimals, more when needed. Reads back exactly; breaks "exactly two".
+const ONE = 10n ** 24n;
+
+export function formatNear(yocto: string): string {
+  const v = BigInt(yocto);
+  const frac = (v % ONE).toString().padStart(24, "0").replace(/0+$/, "").padEnd(2, "0");
+  return `${v / ONE}.${frac}`;
+}
+
+export function parseNear(text: string): string {
+  const [whole = "0", frac = ""] = text.split(".");
+  return (BigInt(whole) * ONE + BigInt(frac.padEnd(24, "0").slice(0, 24))).toString();
+}

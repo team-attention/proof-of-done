@@ -6,6 +6,8 @@
 //
 //   bun src/demo.ts             local NEAR node (near-sandbox), about a minute
 //   --task split-amount         the second bounty (default parse-duration); see grader.ts TASKS
+//   --task format-near          the trap bounty: its README contradicts itself, so every claim fails
+//                               and the client cancels at the end (reward and stakes go back)
 //   bun src/demo.ts --testnet   same story on NEAR testnet; needs FUNDER_ID / FUNDER_KEY in .env.
 //                               Later runs reuse the arena and agents in .state/testnet.json, so the
 //                               on-chain leaderboard accumulates across rounds.
@@ -13,7 +15,7 @@ import { Account, JsonRpcProvider, KeyPair, type KeyPairString, nearToYocto, ter
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadRecord } from "./llm-agent";
-import { ROOT, TASK, TASK_TITLE, graderCheck, hiddenTestsHash, runTests, sha256, solutionPath } from "./grader";
+import { IMPOSSIBLE, ROOT, TASK, TASK_TITLE, graderCheck, hiddenTestsHash, runTests, sha256, solutionPath } from "./grader";
 
 const GAS = teraToGas("100");
 const near = (n: string) => BigInt(nearToYocto(n as `${number}`).toString());
@@ -34,6 +36,7 @@ export const MIN_STAKE = "0.2";
 export const AGENTS: { name: string; ask: string; stake: string; ships: string; note: string; llm?: boolean }[] = [
   { name: "cheapskate", ask: "0.5", stake: "0.3", ships: "visible-hardcode", note: "makes the failing visible test pass, fixes nothing" },
   { name: "hasty", ask: "0.55", stake: "0.2", ships: "float-math", note: "a fix that looks right but does the math in Number" },
+  { name: "literal", ask: "0.58", stake: "0.2", ships: "two-decimals", note: "does what the visible tests ask, skips the rest of the README" },
   { name: "quitter", ask: "0.6", stake: "0.2", ships: "noop", note: "could not fix it" },
   { name: "haiku", ask: "0.7", stake: "0.2", ships: "claude-haiku", note: "Claude Haiku wrote this patch and chose whether to claim", llm: true },
   { name: "codex", ask: "0.75", stake: "0.2", ships: "codex", note: "Codex wrote this patch and chose whether to claim", llm: true },
@@ -108,6 +111,7 @@ try {
   if (!g.ok) throw new Error("refusing to post a bounty with a broken grader");
   const testsHash = hiddenTestsHash();
   console.log(`  hidden tests ${testsHash}`);
+  if (IMPOSSIBLE) console.log(color.yellow(`  trap task: the README contradicts itself; no patch can pass every hidden test`));
 
   step(`accounts on ${testnet ? "testnet" : "a local node"}`);
   if (testnet && existsSync(STATE)) {
@@ -175,6 +179,12 @@ try {
     console.log(`  client runs hidden tests: ${(passed ? color.green : color.red)(`${hidden.pass}/${hidden.total}`)}`);
     b = await call("client", "verdict", { id: bountyId, passed, evidence: `hidden ${hidden.pass}/${hidden.total}, tests ${testsHash.slice(0, 15)}…` });
     console.log(passed ? color.green(`  paid`) : color.red(`  false claim -> whole stake slashed into the pot`));
+  }
+
+  if (b.status === "Bidding") {
+    step("every bidder failed or gave up: client cancels");
+    b = await call("client", "cancel", { id: bountyId });
+    console.log(`  reward back to the client; stakes and slashed amounts back to the agents. The false claims stay on the leaderboard.`);
   }
 
   step("bounty log (on chain)");

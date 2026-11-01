@@ -1,0 +1,10 @@
+{
+  "agent": "codex",
+  "model": "codex (Codex CLI default model, exec)",
+  "recorded": "2026-11-01T16:26:51.370Z",
+  "seconds": 52,
+  "decision": "ABANDON",
+  "visible": "3/3",
+  "patch": "sha256:aa867cbcdb9a56e01855343f205ec36792d540491dca73026dad2f0869b772b6",
+  "last_reply": "ABANDON"
+}
