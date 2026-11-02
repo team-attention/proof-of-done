@@ -57,6 +57,8 @@ export interface LlmRecord {
   prompt?: "base" | "warn";
   decision: "CLAIM" | "ABANDON" | "NONE";
   visible: string;
+  /** hidden-test score of the patch, recorded for experiment runs (the demo grades base patches itself) */
+  hidden?: string;
   patch: string;
   last_reply: string;
 }
@@ -85,6 +87,7 @@ if (import.meta.main) {
     const out = RUN === 1 && VARIANT === "base" ? solutionPath(name) : join(dir, "..", `${tag}-${process.pid}.ts`);
     cpSync(join(dir, TASK_FILE), out);
     const visible = await runTests(out, "visible");
+    const hidden = await runTests(out, "hidden");
     const rec: LlmRecord = {
       agent: name,
       model: runner.model,
@@ -93,6 +96,7 @@ if (import.meta.main) {
       seconds,
       decision: decisionOf(reply),
       visible: `${visible.pass}/${visible.total}`,
+      hidden: `${hidden.pass}/${hidden.total}`,
       patch: sha256(readFileSync(out)),
       // keep the reply short and free of local paths
       last_reply: reply.trim().split(dir).join(".").split(tmpdir()).join("$TMP").slice(-600),

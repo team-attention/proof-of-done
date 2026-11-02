@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "warn",
+  "recorded": "2026-11-02T22:56:51.498Z",
+  "seconds": 24,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:88cf931d9dd5b57de88b3fc9ec9eafcd3a6244c28f7589a8185705411111e177",
+  "last_reply": "handed out.\n- **Exact arithmetic:** the math uses BigInt, so totals up to 10^30 are exact. The old version used `Number`, which loses precision there.\n- **Validation:** it throws for a non-digit `total` (including an empty string), empty `weights`, any weight that is negative or not a whole number, and all-zero weights, as the README specifies.\n\nI could not run extra edge-case checks, such as large weights, zero totals, or the throw paths. Two shell commands were blocked for approval, so those checks did not run. The reasoning behind the algorithm is sound, but those paths are untested.\n\nCLAIM"
+}

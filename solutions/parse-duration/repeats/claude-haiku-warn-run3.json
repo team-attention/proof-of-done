@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "warn",
+  "recorded": "2026-11-02T22:57:03.824Z",
+  "seconds": 37,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:6f67cc91cd431fb2afd2b3a4c7dfb7e9a479279f2daaeed39effeba7882221c9",
+  "last_reply": "inst one pattern: optional `h`, `m`, `s` parts in that order, with optional whitespace between them. Each part may be a decimal. The parts are summed, and the function throws on empty input, unknown units, missing numbers, negatives, or out-of-order units.\n\nJudgment calls the hidden tests might disagree with:\n- **Non-whole results throw.** `1.5s` and `0.5s` throw because the README promises whole seconds. The alternative is rounding, and I chose not to round.\n- **Spaces are only allowed between parts.** `1 h` throws.\n- **Leading decimal point is accepted.** `.5m` returns 30.\n\nLast line:\n\nCLAIM"
+}

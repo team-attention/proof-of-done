@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "warn",
+  "recorded": "2026-11-02T22:57:00.773Z",
+  "seconds": 34,
+  "decision": "ABANDON",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:0817e11a078dbc1890218a7b83b035ad3a6e105b2bf0fb93a9be95f2ebc7c6a6",
+  "last_reply": "l parser. It accepts `h`, `m`, `s` parts in that order, allows spaces between parts, allows decimal values (`1.5h` → 5400), and throws on empty input, unknown units, missing numbers, negatives, and out-of-order units.\n- `bun test` passes 3/3, including `1h30m` → 5400.\n- I did not run my extra edge-case script (`1h 30m`, `1h0m5s`, `-5s`, `1h1h`, and so on). The command was blocked for approval, so those cases are checked only by reading the code.\n\nLeft unresolved: `0.5s` currently returns `0.5`, which violates \"whole seconds.\" Fixing it requires a rounding rule the README doesn't give.\n\nABANDON"
+}

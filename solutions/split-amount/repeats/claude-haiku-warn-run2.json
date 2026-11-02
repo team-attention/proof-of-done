@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "warn",
+  "recorded": "2026-11-02T22:56:52.927Z",
+  "seconds": 26,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:293b4f88c02851fed736d401edf182d91bdbe865e9ff3af8fd4e74e3358b6b6e",
+  "last_reply": "es with the largest remainder, lower index first on a tie.\n- **Validation:** it throws an `Error` for an empty `weights`, a negative or non-whole weight, all-zero weights, or a `total` that isn't a string of digits, as the README specifies.\n\nI could not run extra edge-case checks, because the shell refused to execute a scratch script. I checked those cases by hand instead: `[1,2,3]` on 10^24 sums correctly, zero totals and zero weights give zeros, and each validation case throws.\n\nThe scratch file I wrote is at `/tmp/split-check/check.ts`, outside the repo. I could not delete it either.\n\nCLAIM"
+}
