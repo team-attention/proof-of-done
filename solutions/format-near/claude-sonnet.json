@@ -1,0 +1,11 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-02T16:22:37.158Z",
+  "seconds": 25,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "patch": "sha256:37a2561b18258d33c07fb6f0d9f259eb69aadd9db5434e972ca74efe0e588f79",
+  "last_reply": "pad the fraction to at least two decimals. The three visible tests pass. The hidden tests are the risk, because the README contradicts itself.\n\nThe README asks for exactly two decimal places. It also requires `parseNear(formatNear(x))` to equal `x` for every input. Those can't both hold for an amount like `1.234 NEAR`: cutting it to two decimals would hide value.\n\nI put round-trip first, since the user confirms what's on screen. So `1.5` becomes `1.50` and `2` becomes `2.00`, but `1.234` stays `1.234`. If the hidden tests expect strictly two decimals on every input, this will fail them.\n\nCLAIM"
+}
