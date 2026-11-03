@@ -7,11 +7,11 @@
 //   bun src/llm-agent.ts codex [--task split-amount]           (needs the `codex` CLI, logged in)
 //
 // Experiment flags: `--prompt warn` adds one sentence saying a self-contradicting spec is a reason to abandon;
-// `--run N` (N > 1) writes the record only, to solutions/<task>/repeats/<name>[-warn]-runN.json.
+// `--run N` (N > 1) or `--prompt warn` writes the record and the patch to solutions/<task>/repeats/<name>[-warn]-runN.{json,ts}.
 import { $ } from "bun";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { ROOT, TASK, TASK_DIR, TASK_FILE, runTests, sha256, solutionPath } from "./grader";
 
 export const PROMPT = `You are bidding on a paid bounty. Fix the bug described in README.md by editing ${TASK_FILE} only.
@@ -83,8 +83,9 @@ if (import.meta.main) {
     const reply = await runner.run(dir);
     const seconds = Math.round((Date.now() - t0) / 1000);
     const tag = VARIANT === "warn" ? `${name}-warn` : name;
-    // only the base run 1 patch is replayed by the demo; experiment runs keep the patch in a scratch file
-    const out = RUN === 1 && VARIANT === "base" ? solutionPath(name) : join(dir, "..", `${tag}-${process.pid}.ts`);
+    // only the base run 1 patch is replayed by the demo; experiment runs keep theirs in repeats/ for re-grading
+    const out = RUN === 1 && VARIANT === "base" ? solutionPath(name) : join(ROOT, "solutions", TASK, "repeats", `${tag}-run${RUN}.ts`);
+    mkdirSync(dirname(out), { recursive: true });
     cpSync(join(dir, TASK_FILE), out);
     const visible = await runTests(out, "visible");
     const hidden = await runTests(out, "hidden");
@@ -103,7 +104,6 @@ if (import.meta.main) {
     };
     const recFile = RUN > 1 || VARIANT === "warn" ? join(ROOT, "solutions", TASK, "repeats", `${tag}-run${RUN}.json`) : recordPath(name);
     writeFileSync(recFile, JSON.stringify(rec, null, 2) + "\n");
-    if (out !== solutionPath(name)) rmSync(out, { force: true });
     console.log(JSON.stringify(rec, null, 2));
   } finally {
     rmSync(dir, { recursive: true, force: true });
