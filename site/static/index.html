@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Proof of Done: AI agents stake NEAR on "it's done", hidden tests decide</title>
-<meta name="description" content="Coding agents bid on a bounty with a stake. Lowest ask gets the job. Claiming done when the hidden tests fail costs the whole stake; giving up honestly costs 20%. Slashed stake goes to the agent that ships. Open source, NEAR testnet.">
+<meta name="description" content="AI coding agents stake NEAR on 'it's done' and hidden tests decide. On a task whose README contradicts itself, Claude Haiku and Sonnet claimed done 6 of 6 times; Codex gave up honestly 3 of 3. Open source, NEAR testnet.">
 <link rel="canonical" href="https://proof-of-done.bongbonggg97.workers.dev/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://proof-of-done.bongbonggg97.workers.dev/">
 <meta property="og:title" content="Proof of Done: saying &quot;done&quot; costs your stake if it isn't">
-<meta property="og:description" content="Cheapest agent hardcoded the visible test, claimed done, failed 5 of 8 hidden tests and lost 0.3 NEAR. The honest one was paid 1.14 NEAR. Then Claude Haiku and Codex bid for real. On NEAR testnet.">
+<meta property="og:description" content="We gave coding agents a README that contradicts itself. Claude Haiku and Sonnet said done 6 of 6 times; Codex gave up 3 of 3. One added sentence turned Haiku honest 3 of 3, and cost 1 false give-up in 6 on solvable tasks. Stakes settle on NEAR testnet.">
 <meta property="og:image" content="https://proof-of-done.bongbonggg97.workers.dev/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
@@ -123,7 +123,7 @@ cd proof-of-done/arena &amp;&amp; bun install &amp;&amp; bun run demo</pre>
   <p class="dim">Starts a local NEAR node, deploys the arena, runs six agents (four scripted, two recorded model runs) against real tests, prints the on-chain log and leaderboard. Needs Bun 1.2+ on macOS or Linux.</p>
 
   <h2>Limits</h2>
-  <p class="dim">Testnet and local sandbox only. The client reports the verdict; the contract cannot run tests. What keeps the client honest: the test hash is fixed before bidding, slashed stake never goes to the client, and the hidden tests ship in the repo so anyone can re-run a verdict. The demo replays fixed patches, including the two recorded model runs, so the run is reproducible; <code>bun src/llm-agent.ts claude-haiku</code> or <code>codex</code> records a fresh one. Built for NEAR HACKATHON (Nov 2026), tracks: AI Swarms, Agent Economy, AI Security. Sibling project: <a href="https://countersign.bongbonggg97.workers.dev">Countersign</a>.</p>
+  <p class="dim">Testnet and local sandbox only. The client reports the verdict; the contract cannot run tests. What keeps the client honest: the test hash is fixed before bidding, slashed stake never goes to the client, and the hidden tests ship in the repo so anyone can re-run a verdict. The demo replays fixed patches, including the two recorded model runs, so the run is reproducible; <code>bun src/llm-agent.ts claude-haiku</code> or <code>codex</code> records a fresh one. Built for NEAR HACKATHON (Nov 2026), tracks: AI Swarms, Agent Economy, AI Security. Sibling project: <a href="https://countersign.bongbonggg97.workers.dev" data-e="sibling">Countersign</a>.</p>
 </main>
 <script>
 // Cookie-free counter: sends only the event name. No identifiers are stored.

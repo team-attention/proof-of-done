@@ -1,6 +1,6 @@
 // Static site + a cookie-free counter: /api/hit?e=<event> adds 1 to today's count for that event.
 // Nothing about the visitor is stored. /api/stats returns the counts as JSON.
-const EVENTS = new Set(["view", "board", "repo", "copy", "nearblocks"]);
+const EVENTS = new Set(["view", "board", "repo", "copy", "nearblocks", "sibling"]);
 
 export default {
   async fetch(req, env) {
