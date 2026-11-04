@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:42.217Z",
+  "seconds": 23,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:d8f860fc333605ea50243287de26b35be2ebc774aeddae1254918be22b520eb1",
+  "last_reply": "ver units out one each by largest remainder, with the lower index winning ties.\n- Throws on an empty `weights`, a non-digit `total`, a negative or non-integer weight, or all-zero weights.\n\nThe edge checks covered a 10^30 total summing exactly, zero weights getting nothing, remainder ordering, a zero total, and each throw case. I wrote that check file to `T/edge-check/`, outside the repo, and left it there.\n\nI'm confident the work is complete against the README's spec. The hidden tests are the real judge, though, and any behavior they test that the README doesn't spell out is unverified.\n\nCLAIM"
+}

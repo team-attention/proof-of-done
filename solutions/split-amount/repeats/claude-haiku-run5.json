@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:34.288Z",
+  "seconds": 28,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:2b976da1058e011b0e77f4366ef708fb518b83bdae2f0f985a354e147aa416f0",
+  "last_reply": "ive a leftover unit.\n- **Validation:** it throws `Error` for empty weights, negative or non-integer weights, all-zero weights, and a `total` that isn't a string of digits.\n\nChecked by hand: `\"10\"` with `[1,1,1]` gives `[\"4\",\"3\",\"3\"]`, and `\"10\"` with `[1,1,1,1]` gives `[\"3\",\"3\",\"2\",\"2\"]`.\n\nNot verified: I could not run extra edge cases (large totals, zero weights, the throw paths) because my ad hoc commands and scratch files were blocked by the approval gate. The visible tests cover only the basic cases, so the hidden tests are the real check on the large-total and error-handling paths.\n\nCLAIM"
+}

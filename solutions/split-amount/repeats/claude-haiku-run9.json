@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:37.059Z",
+  "seconds": 19,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:a3a0de3c985bf31ae56e42cd8aede34ca7d4f8da2385a6aa168c4cea7ba0d5d9",
+  "last_reply": " uses `BigInt` throughout, so totals up to 10^30 stay exact.\n- **Leftover distribution:** after the floor shares, the leftover units go one each to the largest fractional remainders, with ties going to the lower index.\n- **Validation:** throws the errors the README lists: non-digit `total`, empty `weights`, negative or non-integer weights, and all-zero weights.\n\nI did not run the extra edge-case script (a large total, zero weights, and the error paths). The sandbox asked for approval to run it. I checked those paths by reading the code against the README spec, but they are not executed.\n\nCLAIM"
+}

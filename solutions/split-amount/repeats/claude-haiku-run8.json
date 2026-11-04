@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:26.278Z",
+  "seconds": 15,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:6fae944ed8cebd227c1098ef0705924f15601e15605c8f1762a1f37a15bb1108",
+  "last_reply": "loses precision above 2^53.\n- **Leftover distribution:** after the floored shares are computed, the leftover units go one each to the shares with the largest fractional remainder. Ties go to the lower index.\n- **Validation:** it throws the errors the README lists: empty `weights`, a negative or non-whole weight, all weights zero, and a `total` that is not a string of digits.\n\nI checked the tie case by hand (`\"10\"`, `[1,1,1]` gives `[\"4\",\"3\",\"3\"]`). I did not run the large-total spot check because the shell command was held for approval, so that path is verified by reading the code only.\n\nCLAIM"
+}

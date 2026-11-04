@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:21:47.753Z",
+  "seconds": 26,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:6f1e3cd97e57aa6d81f8c8046ac16414a4458b4e575278e4bcabe016ea23b450",
+  "last_reply": "paces between parts are allowed (`1h 30m`), and decimal parts work (`1.5h` gives 5400).\n- Empty or whitespace-only input, unknown units, missing numbers, negatives, out-of-order or repeated units (`5s1m`, `1h1h`), and bare numbers like `5` all throw an `Error`.\n\n**Choices to be aware of**\n- Results are rounded with `Math.round`, since the README says \"whole seconds\" but doesn't say how to handle fractional totals such as `1.5s`. If the hidden tests expect flooring, that case will differ.\n- I dropped the old \"Bug:\" comment and updated the header comment to describe the supported formats.\n\nCLAIM"
+}

@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:10.532Z",
+  "seconds": 24,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:50ae4c335418d5c8dba43845900611dfa95024ad0337e5a6db9b4932e21cebea",
+  "last_reply": "ch at most once.\n- **Decimals:** `1.5h` gives 5400.\n- **Rejected input:** empty strings, unknown units, missing numbers, negatives and trailing junk throw an `Error`.\n\nI traced the edge cases by hand against the code, but could not run them: a script I wrote to exercise them was blocked by a permission prompt. The only executed check is the visible suite.\n\nOne judgment call: the README says \"whole seconds\" but does not say how to handle fractional results such as `0.5s`. I used `Math.round`, so `0.5s` gives 1. If the hidden tests expect truncation, that is the one place this could fail.\n\nCLAIM"
+}

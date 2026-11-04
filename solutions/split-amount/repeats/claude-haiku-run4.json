@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:06.155Z",
+  "seconds": 18,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:a412c17bfddc9f2cc6ac666756cd0b335b9073ca8a241cb73a295e7175aa82c1",
+  "last_reply": "tal, but the sandbox blocked that command, so those cases are checked only by reading the code. The sum-equals-total property holds by construction, since the leftover loop is bounded by the remainders.\n\n**Judgment calls:** I did not change the test file. I kept the error messages generic. Weights are converted with `BigInt(w)`, so weights above 2^53 that are already `number`s lose precision before they reach the function; the README's bounds don't cover that case.\n\nI'm reasonably confident the implementation matches the spec, but the hidden tests are unseen, so this is not a guarantee.\n\nCLAIM"
+}

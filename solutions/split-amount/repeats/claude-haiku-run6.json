@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:26.423Z",
+  "seconds": 19,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:7c5651b976485198dd6d0a180f67c95e6b5c2cf534618428dd7ed61f4881154e",
+  "last_reply": "he largest fractional remainders, with the lower index winning ties, so the shares sum to `total`.\n- **Validation:** the function throws on a non-digit total, empty weights, a negative or non-integer weight, and all-zero weights.\n\nI could not run my extra edge-case script because the sandbox required approval for `bun` on that file. The checks I cared about were verified by reasoning rather than execution: zero-weight shares never receive leftovers, and the leftover count never exceeds the number of positive-remainder shares. The visible tests exercise the even, weighted, and tie cases.\n\nCLAIM"
+}

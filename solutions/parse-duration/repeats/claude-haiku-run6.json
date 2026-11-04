@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:21:48.540Z",
+  "seconds": 26,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:3c00a8c759cafc4b822a6fe85f2319ed84a12aa7bfb811a17d3342ce26e05041",
+  "last_reply": "d units. The total is rounded to whole seconds.\n\nTwo choices the README doesn't settle, which the hidden tests might read differently:\n- **Rounding:** I used `Math.round`, so `0.5s` gives 1 and `0.4s` gives 0. It also keeps float noise out of results like `1.1h` (3960). If the hidden tests expect truncation, this is the line to change.\n- **Spacing:** Spaces are allowed only between parts, not between a number and its unit, so `1 h` throws.\n\nI checked the edge cases by reading the regex. A direct run of the edge-case script was blocked by a permission prompt, so I have not executed them.\n\nCLAIM"
+}

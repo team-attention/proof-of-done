@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:21:46.723Z",
+  "seconds": 25,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:fcb7b93bbbc32dab8f2f967a28bf14317582a43f81474b2e705208dcf2479b9f",
+  "last_reply": "und`.\n\nI checked the edge cases by reading the regex, not by running them. My attempt to run an ad hoc edge-case script was blocked for approval. Based on that reading, `1h30m` and `1h 30m` give 5400, `1.5h` gives 5400, and `30m1h`, `1h1h`, `1hm`, `-5s`, `1 h`, and `\"\"` throw. The temp script I wrote is still at `/tmp/dur_check.ts`; delete it when convenient.\n\nTwo parts of the spec were ambiguous, so I picked readings for them:\n- Rounding: \"whole seconds\" could mean round, floor, or reject fractional results. I chose round.\n- Whitespace: I allowed `\\s*` between parts, so tabs also work.\n\nCLAIM"
+}

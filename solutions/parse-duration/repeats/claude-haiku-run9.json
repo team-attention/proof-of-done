@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:17.768Z",
+  "seconds": 33,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:93fa6469e3e9eedc8931a5e489b006b1723a83a8355ea9b015ddce54ea3e8136",
+  "last_reply": "I rewrote `src/duration.ts` to implement the full README spec. The visible suite passes (3 pass, 0 fail). Hidden-test risk remains on two points the README doesn't settle, so I'm claiming with that caveat.\n\n- **Rounding:** the total goes through `Math.round`, so `1.5s` gives 2 and `0.5s` gives 1.\n- **Spaces:** spaces are allowed only between parts, so `1 h` throws.\n\nI checked the edge cases (empty input, bare numbers, negatives, out-of-order or repeated units, `.5m`, `1.h`) by reading the regex. I could not run them, because two attempts to run a scratch script were blocked.\n\nCLAIM"
+}

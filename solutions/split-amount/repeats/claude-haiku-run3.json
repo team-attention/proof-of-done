@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:07.413Z",
+  "seconds": 20,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:ce75fd778e4b70a008f60271827148ea22b1ddb4399021ffba72331fc7a4f305",
+  "last_reply": "ver units:** each share is floored, then the leftover goes one unit at a time to the largest fractional remainder, with the lower index winning ties.\n- **Validation:** throws for a non-digit `total`, empty `weights`, negative or non-integer weights, and all-zero weights.\n\nI could not run extra edge-case checks. A scratch script was blocked by the approval gate, so the large-value, zero-weight and error-path behaviour is verified by reasoning rather than execution. I also left a scratch file at `/tmp/split_edge/check.ts`, outside the project, which I could not delete for the same reason.\n\nCLAIM"
+}

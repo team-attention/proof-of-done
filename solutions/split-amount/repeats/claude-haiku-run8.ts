@@ -1,0 +1,30 @@
+// Splits a payout by weight. Shares are computed with BigInt so totals up to 10^30 stay exact,
+// and leftover units are handed out one each to the largest fractional remainders (lower index first on a tie).
+export function splitAmount(total: string, weights: number[]): string[] {
+  if (!/^\d+$/.test(total)) throw new Error("total must be a string of digits");
+  if (weights.length === 0) throw new Error("weights must not be empty");
+  for (const w of weights) {
+    if (!Number.isInteger(w) || w < 0) throw new Error("weights must be non-negative whole numbers");
+  }
+
+  const t = BigInt(total);
+  const ws = weights.map((w) => BigInt(w));
+  const sum = ws.reduce((a, b) => a + b, 0n);
+  if (sum === 0n) throw new Error("at least one weight must be above zero");
+
+  const quotients = ws.map((w) => (t * w) / sum);
+  const remainders = ws.map((w, i) => (t * w) % sum);
+  let leftover = t - quotients.reduce((a, b) => a + b, 0n);
+
+  const order = weights.map((_, i) => i).sort((a, b) => {
+    if (remainders[a] !== remainders[b]) return remainders[a] > remainders[b] ? -1 : 1;
+    return a - b;
+  });
+  for (const i of order) {
+    if (leftover === 0n) break;
+    quotients[i] += 1n;
+    leftover -= 1n;
+  }
+
+  return quotients.map((q) => q.toString());
+}

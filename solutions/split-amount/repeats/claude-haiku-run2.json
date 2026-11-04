@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:22:19.259Z",
+  "seconds": 32,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:0101a8f1feca86bd3eb8d7be48604f6994826bb33739646705d58dad39964888",
+  "last_reply": "totals up to 10^30 are exact. The old `Number` version lost precision well below that.\n- **Leftover distribution:** each share is `floor(total * w / sum)`. The leftover units go one each to the shares with the largest remainder, with ties going to the lower index. The fixed example `10 / [1,1,1]` now gives `[\"4\",\"3\",\"3\"]`.\n- **Validation:** throws `Error` for empty weights, negative or non-integer weights, a non-digit total, and all-zero weights.\n\nZero-weight shares can never receive a leftover unit, because the leftover count is always less than the number of positive-remainder shares.\n\nCLAIM"
+}

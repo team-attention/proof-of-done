@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:21:43.870Z",
+  "seconds": 22,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:cfb1372767321bc0fb1405bf067af0a2a7769613bacca3e8becd4beb5660fd79",
+  "last_reply": "er or repeated units (`1m1h`, `1h1h`), missing units or numbers (`30`, `h`), negatives, unknown units, and a space between a number and its unit (`1 h`) all throw.\n- **Output:** the total is rounded to a whole number, which also removes float noise such as `1.1h`.\n\nI checked the edge cases by reading the regex rather than running them. My attempt to run them with `bun -e` was blocked by the approval prompt.\n\nOne judgment call to check: the README doesn't say how fractional seconds round. I used `Math.round`, so `0.5s` gives 1. If the hidden tests expect truncation, that case would fail.\n\nCLAIM"
+}

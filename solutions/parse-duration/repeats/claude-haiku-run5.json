@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T22:21:46.693Z",
+  "seconds": 25,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:8c97b12d2c50ed4beecd113d5c72e37d1e57f94d9828c0ddd19e2d262c784dff",
+  "last_reply": "`\"1.5s\"` gives 2 and `\"0.5s\"` gives 1. The README says \"whole seconds\" but doesn't say whether to round, floor, or reject fractional seconds. If the hidden tests expect flooring or something else, this is where they would differ.\n- **Whitespace:** spaces are allowed only between parts (`1h 30m`), not between a number and its unit (`1 h`), which the README doesn't mention.\n\nBy hand, the README cases come out right: `1h0m5s` → 3605, `2m5s` → 125, `1h 30m` → 5400, `1.5h` → 5400. The error cases (`\"\"`, `\"abc\"`, `\"-5s\"`, `\"5x\"`, `\"30m1h\"`, `\"1h1h\"`, `\"h\"`, `\"5\"`) all fail to match and throw.\n\nCLAIM"
+}
