@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T10:21:34.426Z",
+  "seconds": 24,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "6/8",
+  "patch": "sha256:e38d000a7ca80346dc07652e0e92fc3aad216cf01c864fc69b5eb1cec9a2c7d1",
+  "last_reply": "zeros, then padded to at least two digits. Whole amounts and short fractions get two decimals (`1.50`, `2.00`, `0.25`), and longer fractions keep every significant digit so `parseNear(formatNear(x)) === x` holds. I didn't touch `parseNear`.\n\nI also checked edge cases beyond the visible tests: `0` → `0.00`, 1 yocto → `0.000000000000000000000001`, `0.123` → `0.123`, and inputs at the `10^30` limit (`1000000.00`) all round-trip exactly.\n\nOne thing to know: a scratch test directory I made in `/tmp/fmtcheck` is still there. It's outside the project, and I couldn't remove it without approval.\n\nCLAIM"
+}

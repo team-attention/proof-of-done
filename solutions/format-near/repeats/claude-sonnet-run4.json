@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T10:21:20.722Z",
+  "seconds": 11,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "6/8",
+  "patch": "sha256:350b73b461e7e429d65aaa1505461b65947b3db105802fa93344a04bce9ba90a",
+  "last_reply": " and 2 NEAR as `2.00`. All 3 visible tests pass. I didn't run the hidden tests, since I can't see them, so I haven't checked the round-trip requirement beyond the visible cases.\n\nIf an amount has non-zero digits past the second decimal, they are kept rather than rounded. Rounding would break the requirement that `parseNear(formatNear(x))` equals `x`. So a value like 1.123 NEAR shows as `1.123`, which is more than two places but loses nothing. If the hidden tests expect exactly two places even for those values, they would fail. I judged the round-trip rule to be the stricter requirement.\n\nCLAIM"
+}

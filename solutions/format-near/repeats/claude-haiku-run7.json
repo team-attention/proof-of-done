@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T10:21:48.807Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "6/8",
+  "patch": "sha256:0b0c5194ea20c6227835c165c80321a3805e83e1f52a86d8b4b71d6b61ce8dc0",
+  "last_reply": "e than two fractional digits: \"exactly two decimal places\" can't also satisfy \"never hides value\" and round-trip through `parseNear`. I kept the round-trip guarantee and the README's examples (`1.50`, `2.00`, `0.25`). Amounts with more digits, such as 1 yoctoNEAR, show all their significant digits, so the output width varies in those cases. If the hidden tests expect a fixed two-decimal output and truncation, this will fail them.\n\nI did not run extra round-trip spot checks because that command needed approval. The change is small and I traced the zero, whole, and sub-0.01 cases by hand.\n\nCLAIM"
+}

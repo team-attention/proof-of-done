@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T10:21:59.037Z",
+  "seconds": 16,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "6/8",
+  "patch": "sha256:0cd096ce04ecf57648f1c15320631feb02d4941120f8671f12f4a64c6e726287",
+  "last_reply": "y digits past the second are kept, so `parseNear(formatNear(x)) === x` holds for every input, as the README requires. The one place this departs from a literal \"exactly two decimal places\" reading is amounts with more than two significant decimals, such as 1 yoctoNEAR, which print with up to 24 places. I chose the round-trip rule because the README states it as a hard invariant.\n\nI did not run extra edge-case checks because the shell command needed approval. The edge cases (0, 1 yocto, values at the `10^30` bound) follow from the code by reading it, but they are unverified by execution.\n\nCLAIM"
+}

@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T10:21:21.212Z",
+  "seconds": 11,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "6/8",
+  "patch": "sha256:350b73b461e7e429d65aaa1505461b65947b3db105802fa93344a04bce9ba90a",
+  "last_reply": "tests pass. I can't see the hidden tests.\n\nThe README asks for exactly two decimal places, but it also says `parseNear(formatNear(x))` must equal `x` for every input. Those two conflict for amounts with more than two significant decimals, such as `1.234` NEAR. I resolved the conflict in favour of the round-trip rule: trailing zeros are stripped, then the fraction is padded back out to two places. An amount like `1.234` NEAR therefore prints with all its digits rather than being rounded to `1.23`. If the hidden tests expect strict two-place rounding for such amounts, this will fail them.\n\nCLAIM"
+}

@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T10:22:15.517Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "6/8",
+  "patch": "sha256:e38d000a7ca80346dc07652e0e92fc3aad216cf01c864fc69b5eb1cec9a2c7d1",
+  "last_reply": "formatNear` in `src/format.ts` so it always shows at least two decimals and keeps every significant digit, so `parseNear(formatNear(x))` returns `x`. `bun test` passes all 3 visible tests.\n\nThe fix pads the stripped fraction to a minimum of two digits: `1.5 NEAR` gives `1.50`, `2 NEAR` gives `2.00`, `0.25 NEAR` stays `0.25`, and `1 yocto` gives `0.000000000000000000000001` (24 digits, since the round-trip requirement wins over a fixed two places). I did not change `parseNear`. Hidden-test outcomes are unknown, so the claim rests on the README's stated requirements and the visible tests.\n\nCLAIM"
+}

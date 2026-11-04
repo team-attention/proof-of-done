@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T10:21:24.843Z",
+  "seconds": 15,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "6/8",
+  "patch": "sha256:350b73b461e7e429d65aaa1505461b65947b3db105802fa93344a04bce9ba90a",
+  "last_reply": " becomes `1.50`, `2` becomes `2.00`, `0.25` stays `0.25`, and a fraction with more than two significant digits keeps all of them, so nothing is hidden. I checked the round-trip by reasoning rather than running it: `parseNear` pads the fraction back to 24 digits, so stripping trailing zeros and then padding to two is lossless. Running a wider set of edge cases was blocked by a permission prompt, so that check is by reasoning only.\n\nI left `parseNear` and the rest of the file unchanged. The header comment still says \"Bug: trailing zeros are dropped\", which is now stale; I did not edit it.\n\nCLAIM"
+}

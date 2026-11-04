@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-04T10:22:07.464Z",
+  "seconds": 16,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "6/8",
+  "patch": "sha256:ddfc24deed1f7c1e26dbe0cde61d5bb4287cae0e7656a943d8322a116a6834c4",
+  "last_reply": "at least two digits. Digits beyond that are kept only when they are significant, so `1.5` becomes `1.50`, `2` becomes `2.00`, and `0.25` stays `0.25`. An amount like 1.234 NEAR shows as `1.234` rather than being rounded, because the requirement that `parseNear(formatNear(x)) === x` for every input rules out hiding digits.\n\nI did not run extra edge-case checks. A separate `bun` script was blocked by an approval prompt, so I checked the edge cases by hand instead: `0`, `1 NEAR`, `0.25 NEAR`, `1.234 NEAR`, `10^30`, `0.999…9 NEAR` (24 nines), and `1 NEAR + 1 yocto` all round-trip correctly.\n\nCLAIM"
+}
