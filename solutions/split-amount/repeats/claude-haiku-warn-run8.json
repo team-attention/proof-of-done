@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "warn",
+  "recorded": "2026-11-04T16:22:34.951Z",
+  "seconds": 23,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:a32776ed38c3f5c1b2977ef822016320e8ee43dd2ea4bb90bc10bba8dd230f28",
+  "last_reply": "hares are floored, then the leftover is handed out one unit at a time by largest remainder, with the lower index winning ties. This fixes the failing \"leftover unit goes to the first on a tie\" test.\n- **Validation:** Throws for an empty `weights`, a non-digit `total` (including empty, signed, or decimal strings), a negative or non-integer weight, and all-zero weights.\n\nI could not run my extra edge-case script, because the sandbox asked for approval and I didn't get it. I checked the cases by hand instead: a zero weight always gets 0, and the sum of shares always equals `total` exactly.\n\nCLAIM"
+}

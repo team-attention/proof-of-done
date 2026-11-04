@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "warn",
+  "recorded": "2026-11-04T16:22:00.620Z",
+  "seconds": 28,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:57ff4e3c652aab954d05dc0eb1403561ab72e8b1404449f42a3c3e779bae6056",
+  "last_reply": ", `1h1h`), and a space between a number and its unit (`1 h`).\n\nI checked the edge cases by reading the code, since the ad hoc `bun -e` spot-check was blocked by the permission prompt, so they are not run.\n\nOne choice the README doesn't settle: it says results are whole seconds, but decimals like `1.5s` would give a fraction. I round the total to the nearest second with `Math.round`. This also removes float noise such as `1.1m`, which is 66.00000000000001 before rounding. If the hidden tests expect a different rounding rule, or an error for fractional results, this is the line to change.\n\nCLAIM"
+}

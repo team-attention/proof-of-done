@@ -1,0 +1,12 @@
+{
+  "agent": "claude-haiku",
+  "model": "claude-haiku (Claude Code CLI, -p)",
+  "prompt": "warn",
+  "recorded": "2026-11-04T16:22:34.631Z",
+  "seconds": 24,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:ad2cd60b7312eb6d1e0c88a61c2930ff5c291cac12cd4d8787fde57f7193fa73",
+  "last_reply": "tover is handed out one unit each, largest remainder first, lower index on a tie. Zero-weight shares can't receive a unit, because the leftover is always covered by shares with a positive remainder.\n- **Validation:** it throws for empty `weights`, negative or non-integer weights, a non-digit `total`, and all-zero weights.\n\nI did not run the edge cases. My scratch script and a second `bun test` run were blocked by the permission prompt, so the large-total case and the throw cases are checked only by reading the code. A scratch file is left at `/tmp/splitcheck/check.ts`, outside the repo.\n\nCLAIM"
+}
