@@ -2,7 +2,9 @@
 //! and saying "done" is a bet. If the client's hidden tests fail, the whole stake is slashed.
 //! Giving up honestly before claiming costs 20%. Slashed stake never goes to the client: it is
 //! added to the bounty and paid to the agent whose work actually passes (or returned on cancel),
-//! so a client gains nothing by failing good work.
+//! so a client gains nothing by failing good work. A client can still fail good work to steer the
+//! pot to a second account it controls; naming an independent verifier when posting takes the
+//! verdict out of the client's hands.
 
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
@@ -116,6 +118,16 @@ fn pay(to: &AccountId, yocto: u128) {
     }
 }
 
+/// Verifiers live under their own storage keys, outside `Bounty`, so arenas deployed before this
+/// field existed keep reading their state.
+fn verifier_key(id: u64) -> Vec<u8> {
+    [b"verifier:".as_slice(), &id.to_le_bytes()].concat()
+}
+
+fn verifier_of(id: u64) -> Option<AccountId> {
+    env::storage_read(&verifier_key(id)).and_then(|v| String::from_utf8(v).ok()).and_then(|s| s.parse().ok())
+}
+
 fn near_str(yocto: u128) -> String {
     let milli = yocto / 10u128.pow(21);
     format!("{}.{:03} NEAR", milli / 1000, milli % 1000)
@@ -134,15 +146,17 @@ impl Arena {
     }
 
     /// Lock the attached deposit as the reward. The worker is paid their ask; the rest returns.
+    /// `verifier`, if set, is the only account that can give the verdict and cannot bid.
     #[payable]
-    pub fn post_bounty(&mut self, title: String, spec: String, tests_hash: String, grader_check: String, min_stake: U128) -> Bounty {
+    pub fn post_bounty(&mut self, title: String, spec: String, tests_hash: String, grader_check: String, min_stake: U128, verifier: Option<AccountId>) -> Bounty {
         let reward = env::attached_deposit().as_yoctonear();
         require!(reward >= NearToken::from_millinear(10).as_yoctonear(), "reward must be at least 0.01 NEAR");
         require!(min_stake.0 > 0, "min_stake must be positive");
         require!(title.len() <= 120 && spec.len() <= 1000 && grader_check.len() <= 200, "text too long");
         require!(tests_hash.starts_with("sha256:") && tests_hash.len() == 71, "tests_hash must be sha256:<64 hex>");
         let client = env::predecessor_account_id();
-        let b = Bounty {
+        require!(verifier.as_ref() != Some(&client), "the verifier must not be the client");
+        let mut b = Bounty {
             id: self.next_id,
             client: client.clone(),
             title,
@@ -160,8 +174,12 @@ impl Arena {
             log: vec![format!("{client} posted {} (min stake {})", near_str(reward), near_str(min_stake.0))],
         };
         self.next_id += 1;
+        if let Some(v) = &verifier {
+            env::storage_write(&verifier_key(b.id), v.as_bytes());
+            Self::note(&mut b, format!("verdicts by {v}, not the client"));
+        }
         self.bounties.insert(b.id, b.clone());
-        emit("bounty_posted", json!({"id": b.id, "client": client, "reward": b.reward}));
+        emit("bounty_posted", json!({"id": b.id, "client": client, "reward": b.reward, "verifier": verifier}));
         b
     }
 
@@ -173,6 +191,7 @@ impl Arena {
         let mut b = self.get(id);
         require!(b.status == Status::Bidding || b.status == Status::Assigned || b.status == Status::Claimed, "bounty is closed");
         require!(agent != b.client, "the client cannot bid on its own bounty");
+        require!(verifier_of(id).as_ref() != Some(&agent), "the verifier cannot bid on the bounty it judges");
         require!(stake >= b.min_stake.0, format!("stake must be at least {}", near_str(b.min_stake.0)));
         require!(ask.0 > 0 && ask.0 <= b.reward.0, format!("ask must be between 0 and the reward ({})", near_str(b.reward.0)));
         require!(
@@ -248,10 +267,14 @@ impl Arena {
         b
     }
 
-    /// Client reports the hidden-test result. `evidence` should say how to re-run it.
+    /// The verifier (or the client, if none was named) reports the hidden-test result.
+    /// `evidence` should say how to re-run it.
     pub fn verdict(&mut self, id: u64, passed: bool, evidence: String) -> Bounty {
         let mut b = self.get(id);
-        require!(env::predecessor_account_id() == b.client, "only the client can give a verdict");
+        match verifier_of(id) {
+            Some(v) => require!(env::predecessor_account_id() == v, "only the verifier can give a verdict"),
+            None => require!(env::predecessor_account_id() == b.client, "only the client can give a verdict"),
+        }
         require!(b.status == Status::Claimed, "no claim to judge");
         require!(evidence.len() <= 300, "evidence too long");
         let w = b.worker.take().unwrap();
@@ -305,6 +328,10 @@ impl Arena {
     }
 
     // --- views
+
+    pub fn get_verifier(&self, id: u64) -> Option<AccountId> {
+        verifier_of(id)
+    }
 
     pub fn get_bounty(&self, id: u64) -> Option<Bounty> {
         self.bounties.get(&id).cloned()
@@ -402,7 +429,7 @@ mod tests {
     fn arena_with_bids() -> Arena {
         as_(accounts(0), n(1000));
         let mut c = Arena::new(None);
-        c.post_bounty("fix it".into(), "tasks/x".into(), H.into(), "noop: 0/8".into(), U128(n(200)));
+        c.post_bounty("fix it".into(), "tasks/x".into(), H.into(), "noop: 0/8".into(), U128(n(200)), None);
         as_(accounts(1), n(300));
         c.bid(0, U128(n(500)));
         as_(accounts(2), n(200));
@@ -463,7 +490,7 @@ mod tests {
     fn stake_below_minimum_refused() {
         as_(accounts(0), n(1000));
         let mut c = Arena::new(None);
-        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)));
+        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), None);
         as_(accounts(1), n(100));
         c.bid(0, U128(n(500)));
     }
@@ -473,7 +500,7 @@ mod tests {
     fn ask_above_reward_refused() {
         as_(accounts(0), n(1000));
         let mut c = Arena::new(None);
-        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)));
+        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), None);
         as_(accounts(1), n(200));
         c.bid(0, U128(n(1200)));
     }
@@ -482,7 +509,7 @@ mod tests {
     fn all_fail_reopens_and_cancel_refunds_pot() {
         as_(accounts(0), n(1000));
         let mut c = Arena::new(None);
-        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)));
+        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), None);
         as_(accounts(1), n(200));
         c.bid(0, U128(n(500)));
         as_(accounts(0), 0);
@@ -503,5 +530,53 @@ mod tests {
         let mut c = arena_with_bids();
         as_(accounts(4), 0);
         c.expire(0);
+    }
+
+    /// client=0, verifier=5, worker=1
+    fn arena_with_verifier() -> Arena {
+        as_(accounts(0), n(1000));
+        let mut c = Arena::new(None);
+        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), Some(accounts(5)));
+        as_(accounts(1), n(200));
+        c.bid(0, U128(n(500)));
+        as_(accounts(0), 0);
+        c.close_bidding(0);
+        as_(accounts(1), 0);
+        c.claim_done(0, H.into(), H.into());
+        c
+    }
+
+    #[test]
+    #[should_panic(expected = "only the verifier")]
+    fn client_cannot_judge_when_verifier_named() {
+        let mut c = arena_with_verifier();
+        as_(accounts(0), 0);
+        c.verdict(0, false, "hidden 0/8".into());
+    }
+
+    #[test]
+    fn verifier_judges() {
+        let mut c = arena_with_verifier();
+        assert_eq!(c.get_verifier(0), Some(accounts(5)));
+        as_(accounts(5), 0);
+        let b = c.verdict(0, true, "hidden 8/8".into());
+        assert_eq!(b.status, Status::Paid);
+        assert!(b.log.iter().any(|l| l.contains("verdicts by")));
+    }
+
+    #[test]
+    #[should_panic(expected = "the verifier cannot bid")]
+    fn verifier_cannot_bid() {
+        let mut c = arena_with_verifier();
+        as_(accounts(5), n(200));
+        c.bid(0, U128(n(500)));
+    }
+
+    #[test]
+    #[should_panic(expected = "must not be the client")]
+    fn client_cannot_be_verifier() {
+        as_(accounts(0), n(1000));
+        let mut c = Arena::new(None);
+        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), Some(accounts(0)));
     }
 }

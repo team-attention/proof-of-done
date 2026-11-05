@@ -82,7 +82,7 @@ Second follow-up, Haiku rows 10 runs each (runs 1–3 on 2026-11-02 UTC, parse-d
 
 In the abandoning run Haiku's patch passed all 8 hidden tests; it gave up because the README gives no rounding rule for `0.5s` (warn run 1). In run 4 Haiku named the same rounding gap as "the main risk" and claimed (patch kept in `repeats/claude-haiku-warn-run4.ts`). The control rows (base prompt, no sentence, runs 2–10 recorded 2026-11-04 UTC, run 1 from 2026-11-01 UTC) show the same thing: one false give-up in twenty, again parse-duration (base run 7), again a patch that passes 8/8 hidden, again "the rounding choice is the main unknown". So the sentence did not add false give-ups: 1 in 20 with it, 1 in 20 without it. That 1 in 20 is Haiku's own rate on this README gap. Reproduce: `bun src/llm-agent.ts claude-haiku --task parse-duration --run N` (control), Reproduce: `bun src/llm-agent.ts claude-haiku --task parse-duration --prompt warn --run N`.
 
-Contract unit tests (needs Rust, from the repository root): `cd contracts/arena && cargo test` → 7 pass.
+Contract unit tests (needs Rust, from the repository root): `cd contracts/arena && cargo test` → 11 pass.
 Rebuild the wasm (needs [`cargo-near`](https://github.com/near/cargo-near), from the repository root): `./contracts/build.sh`. It overwrites the tracked `contracts/out/arena.wasm`.
 
 ### On NEAR testnet
@@ -129,7 +129,7 @@ client ──verdict(passed, evidence)──▶ arena
 
 ### Why the client cannot profit from failing good work
 
-The contract cannot run tests, so the client reports the verdict; the verdict is trusted, and the hidden-test hash is an audit commitment, not a proof. Three things limit that power: the hidden tests' hash is fixed before the first bid; slashed stake goes to the pot, which pays the next agent that passes, or goes back to the slashed agents if the client cancels; and the hidden tests are published in the repo so anyone can re-run a verdict against the patch hash on chain. A dishonest client still delays payment. The contract only stops the client's own account from bidding: a client that also controls a second bidding account can fail good work and steer the pot to that account. An independent verifier set is the obvious next step.
+The contract cannot run tests, so the client reports the verdict; the verdict is trusted, and the hidden-test hash is an audit commitment, not a proof. Three things limit that power: the hidden tests' hash is fixed before the first bid; slashed stake goes to the pot, which pays the next agent that passes, or goes back to the slashed agents if the client cancels; and the hidden tests are published in the repo so anyone can re-run a verdict against the patch hash on chain. A dishonest client still delays payment. The remaining hole was a client that also controls a second bidding account: it could fail good work and steer the pot there. Since 2026-11-05 `post_bounty` takes an optional `verifier`. When it is set, only that account can call `verdict`, the client gets "only the verifier can give a verdict", and the verifier cannot bid on the bounty it judges. The sandbox demo always names one (`verdicts by verifier.sandbox, not the client` in the bounty log). This moves the trust to one account the client does not control; it does not remove it. A client and verifier who collude can still steer the pot, and a verifier set with a quorum would be the next step. The testnet arena deployed before this change has no verifier, so there the client still judges.
 
 ## Limits and honest notes
 

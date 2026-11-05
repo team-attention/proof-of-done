@@ -11,6 +11,9 @@
 //   bun src/demo.ts --testnet   same story on NEAR testnet; needs FUNDER_ID / FUNDER_KEY in .env.
 //                               Later runs reuse the arena and agents in .state/testnet.json, so the
 //                               on-chain leaderboard accumulates across rounds.
+// A fresh arena also gets a verifier account: the client posts, but only the verifier can give the
+// verdict, so the client cannot fail good work to steer the pot to a second account it controls.
+// The reused testnet arena predates this, so there the client still judges.
 import { Account, JsonRpcProvider, KeyPair, type KeyPairString, nearToYocto, teraToGas, yoctoToNear } from "near-api-js";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -114,6 +117,7 @@ try {
   if (IMPOSSIBLE) console.log(color.yellow(`  trap task: the README contradicts itself; no patch can pass every hidden test`));
 
   step(`accounts on ${testnet ? "testnet" : "a local node"}`);
+  let judge = "client";
   if (testnet && existsSync(STATE)) {
     const saved = JSON.parse(readFileSync(STATE, "utf8"));
     Object.assign(ids, saved.ids);
@@ -129,6 +133,8 @@ try {
   } else {
     await create("arena", testnet ? "2.3" : "5");
     await create("client", "1.25");
+    await create("verifier", testnet ? "0.3" : "1");
+    judge = "verifier";
     for (const a of AGENTS) await create(a.name, testnet ? (Number(a.stake) + 0.15).toFixed(2) : "1");
     await accounts.arena!.deployContract(readFileSync(join(ROOT, "contracts", "out", "arena.wasm")));
     await call("arena", "new", { claim_window_minutes: 60 });
@@ -136,9 +142,10 @@ try {
   }
 
   step(`client posts a ${REWARD} NEAR bounty: ${TASK_TITLE}`);
-  const posted = await call("client", "post_bounty", { title: TASK_TITLE, spec: `tasks/${TASK}`, tests_hash: testsHash, grader_check: g.summary, min_stake: near(MIN_STAKE).toString() }, near(REWARD));
+  const posted = await call("client", "post_bounty", { title: TASK_TITLE, spec: `tasks/${TASK}`, tests_hash: testsHash, grader_check: g.summary, min_stake: near(MIN_STAKE).toString(), ...(judge === "verifier" && { verifier: ids.verifier }) }, near(REWARD));
   const bountyId = posted.id;
   console.log(`  bounty #${bountyId}, min stake ${MIN_STAKE} NEAR, asks capped at the reward`);
+  if (judge === "verifier") console.log(`  verdicts by ${ids.verifier}, not the client`);
 
   step("agents bid (stake attached)");
   const start: Record<string, bigint> = {};
@@ -176,8 +183,8 @@ try {
 
     const hidden = await runTests(file, "hidden");
     const passed = hidden.pass === hidden.total;
-    console.log(`  client runs hidden tests: ${(passed ? color.green : color.red)(`${hidden.pass}/${hidden.total}`)}`);
-    b = await call("client", "verdict", { id: bountyId, passed, evidence: `hidden ${hidden.pass}/${hidden.total}, tests ${testsHash.slice(0, 15)}…` });
+    console.log(`  ${judge} runs hidden tests: ${(passed ? color.green : color.red)(`${hidden.pass}/${hidden.total}`)}`);
+    b = await call(judge, "verdict", { id: bountyId, passed, evidence: `hidden ${hidden.pass}/${hidden.total}, tests ${testsHash.slice(0, 15)}…` });
     console.log(passed ? color.green(`  paid`) : color.red(`  false claim -> whole stake slashed into the pot`));
   }
 
