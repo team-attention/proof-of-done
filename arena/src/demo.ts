@@ -11,9 +11,10 @@
 //   bun src/demo.ts --testnet   same story on NEAR testnet; needs FUNDER_ID / FUNDER_KEY in .env.
 //                               Later runs reuse the arena and agents in .state/testnet.json, so the
 //                               on-chain leaderboard accumulates across rounds.
-// A fresh arena also gets a verifier account: the client posts, but only the verifier can give the
+// Every bounty names a verifier account: the client posts, but only the verifier can give the
 // verdict, so the client cannot fail good work to steer the pot to a second account it controls.
-// The reused testnet arena predates this, so there the client still judges.
+// A reused testnet arena that predates this is upgraded in place first (bounties 0-4 had no
+// verifier, so the client judged those).
 import { Account, JsonRpcProvider, KeyPair, type KeyPairString, nearToYocto, teraToGas, yoctoToNear } from "near-api-js";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -124,6 +125,16 @@ try {
     Object.assign(keys, saved.keys);
     for (const k of Object.keys(ids)) accounts[k] = new Account(ids[k]!, rpc, keys[k] as KeyPairString);
     console.log(`  reusing arena ${arenaId()} and its agents`);
+    try {
+      await view("get_verifier", { id: 0 });
+    } catch {
+      // Deployed before the verifier existed. The new code keeps the stored layout, so a plain
+      // redeploy (no migration) keeps every bounty and the leaderboard.
+      await accounts.arena!.deployContract(readFileSync(join(ROOT, "contracts", "out", "arena.wasm")));
+      console.log(`  arena upgraded in place to the verifier-aware contract`);
+    }
+    if (!ids.verifier) await create("verifier", "0.3");
+    judge = "verifier";
     await topUp("client", "1.25");
     for (const a of AGENTS) {
       const min = (Number(a.stake) + 0.15).toFixed(2);
