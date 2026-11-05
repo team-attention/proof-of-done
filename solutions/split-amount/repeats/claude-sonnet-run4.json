@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:22:05.441Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:f4d8f48914419e2635dd43202452f87a03e4dbf22f82c57836b60f6fb99e040b",
+  "last_reply": "lit.ts` to use BigInt, so the shares now add up to `total` exactly. The 3 visible tests pass. I haven't seen the hidden tests, so that is the only check so far.\n\n- **Cause:** the old code converted `total` to a float, which can't hold values near 10^30, and it dropped the leftover units.\n- **Distribution:** each share is `floor(total * w / sum)`. The leftover units go one each to the largest fractional remainders, with ties going to the lower index.\n- **Errors:** it throws on empty `weights`, a negative or non-integer weight, all-zero weights, or a `total` that isn't a string of digits.\n\nCLAIM"
+}

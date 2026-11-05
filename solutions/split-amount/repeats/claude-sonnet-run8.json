@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:23:05.052Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:d59a642ab2f6685b3d9baee4ec94c67dd206558e2b140643d169e8bb7f9bd195",
+  "last_reply": "I rewrote `splitAmount` in `src/split.ts` to use BigInt, so the leftover units are no longer dropped. The 3 visible tests pass. I can't see the hidden tests, so I haven't checked it against them.\n\n- **Shares:** each share starts as `floor(total * weight / sum)`.\n- **Leftover units:** they go out one each, to the largest fractional remainders first, with the lower index winning ties.\n- **Validation:** it throws an `Error` for a total that isn't all digits, empty weights, negative or non-integer weights, and all-zero weights.\n- **Large totals:** BigInt keeps totals up to `10^30` exact.\n\nCLAIM"
+}

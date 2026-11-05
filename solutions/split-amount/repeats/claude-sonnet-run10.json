@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:23:33.902Z",
+  "seconds": 13,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:13fbebd36007862c4bc94cf36e72c54c3557474228fd618655ec770fb4a2f199",
+  "last_reply": "gInt arithmetic, and the 3 visible tests pass. I couldn't run the hidden tests, so I haven't checked the function against them.\n\n- **Rounding:** Each share is the floored proportional amount. The leftover units then go one each to the shares with the largest remainder, with ties going to the lower index. The shares add up to `total` exactly. The old code used `Number`, which also loses precision near `10^30`.\n- **Validation:** It throws an `Error` for an empty weights array, any weight that is negative or not a whole number, all-zero weights, and a `total` that isn't a string of digits.\n\nCLAIM"
+}

@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:21:36.307Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:83595fe59c0c3afd329cda52f82afb590175e2b481f186ae20525ba52255d82b",
+  "last_reply": "arithmetic, so it no longer loses precision on values up to 10^30. The three visible tests pass. I haven't seen the hidden tests, so they are the one thing I can't check.\n\n- **Shares:** each share is `floor(total * w / sum)`, computed with BigInt, which is exact at 10^30.\n- **Leftovers:** the remaining units are handed out one each, largest fractional remainder first, with ties going to the lower index. The shares add up to `total` exactly.\n- **Errors:** it throws on an empty `weights` array, a negative or non-integer weight, all weights zero, or a `total` that isn't a string of digits.\n\nCLAIM"
+}

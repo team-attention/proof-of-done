@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:21:38.697Z",
+  "seconds": 18,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:3141057de590ea201b7c8828efb5848efa7dd6db74ed98c1319ac744839799e0",
+  "last_reply": "e three visible tests pass. I didn't run the edge cases below; I only traced them by hand against the regex.\n\n- **Accepted:** `1h30m`, `2m5s`, `1h0m5s`, `1h 30m` and decimals such as `1.5h` (5400).\n- **Throws an `Error`:** the empty string, a number with no unit (`5`), negatives, unknown units (`1d`), a bare unit (`h`), and units out of order (`1m1h`).\n- **Unspecified cases I chose:** a decimal that doesn't come out to whole seconds is rounded, so `1.5s` gives 2. Space is allowed only between parts, so `1 h` throws. If the hidden tests expect truncation or allow `1 h`, those would fail.\n\nCLAIM"
+}

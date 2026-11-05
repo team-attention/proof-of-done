@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:23:54.366Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:17a400a30b7c279ed4636ed165a2b9f313aa24dfa532ca91b6c5aa96df870b4a",
+  "last_reply": "mals like `1.5h` (5400). The 3 visible tests pass. I haven't seen the hidden tests, so a few judgment calls below could still matter.\n\n- **Throws:** empty string, unknown unit, no number, negative values, out-of-order units (`5s1m`), repeated units and trailing junk. A space between a number and its unit (`1 h`) also throws, since the README only allows spaces between parts.\n- **Rounding:** the result is rounded to whole seconds, so `1.5s` gives 2 and `0.1h` gives 360 rather than 360.00000000000006. If the hidden tests expect a different rounding for fractional seconds, that would fail.\n\nCLAIM"
+}

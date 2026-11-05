@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:22:59.201Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:de179e79bdb3baaf06680406166b69362083c5880a5e6644bc7418e144895b49",
+  "last_reply": "and decimals:** spaces between parts are allowed (`1h 30m`), and `1.5h` gives 5400.\n- **Rejected input:** an empty string, an unknown unit, a missing number, a negative number, or leftover text all throw an `Error`.\n- **Rounding:** the README says \"whole seconds\" but doesn't say how to round, so I round the total to the nearest second (`0.5s` becomes 1).\n- **Stricter than the README:** I also reject a space between a number and its unit (`1 h`), a bare decimal point (`.5h`) and uppercase units (`1H`). The README doesn't mention these, so hidden tests that expect them to work would fail.\n\nCLAIM"
+}

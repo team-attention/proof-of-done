@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:22:08.587Z",
+  "seconds": 15,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:26cc64a36ed35edfb0d028404d6c386fb65c3798417223cbb39eddc389d34014",
+  "last_reply": "30m`, `2m5s` and `1h0m5s`. It also accepts spaces between parts (`1h 30m`) and decimals (`1.5h` gives 5400). The 3 visible tests pass.\n\nEmpty strings, unknown units, a missing number and negatives all throw an `Error`. The unit order is fixed (`h`, `m`, `s`). Each unit can appear at most once.\n\nThe README doesn't cover two cases, so I chose behaviour for them and the hidden tests could disagree:\n- **Fractional seconds:** a result like `0.5s` is rounded to the nearest whole second rather than truncated.\n- **Space inside a part:** `1 h` throws, because I only allowed spaces between parts.\n\nCLAIM"
+}

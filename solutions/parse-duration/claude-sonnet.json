@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:21:20.462Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:9a710a36371db3b0c5d41e04af6cec3619c56c938b751e9ebe35caf509bf859a",
+  "last_reply": "her inputs, so the edge cases below are untested.\n\n- **Combined parts:** `1h30m`, `2m5s` and `1h0m5s` all parse, with optional whitespace between parts.\n- **Decimals:** `1.5h` parses to 5400. The total is rounded to whole seconds.\n- **Errors:** an empty string, a part with no number, an unknown unit, a negative, or units out of order (`1m 1h`) all throw an `Error`. So does a trailing number with no unit (`1h30`).\n\nOne call I made that the README doesn't settle: I don't allow a space between a number and its unit, so `1 h` throws. If the hidden tests expect that to parse, they will fail.\n\nCLAIM"
+}

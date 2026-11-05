@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:21:51.810Z",
+  "seconds": 15,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:8a428da5b6cfdfc7cde4fa0c031a1ffd1496eeb8befc232338696931ea18dd7b",
+  "last_reply": "rithmetic, and the 3 visible tests pass. I haven't seen the hidden tests, so I can't say how they will go.\n\n- **The fix:** each share is `floor(total * weight / sum)`, computed exactly. The leftover units then go one each to the largest fractional remainders, with ties going to the lower index. The shares add up to `total`.\n- **Large totals:** the old code used `Number`, which loses precision above about 9×10^15. BigInt keeps totals up to 10^30 exact.\n- **Errors:** it throws on empty weights, a negative or non-integer weight, all-zero weights, or a `total` that isn't a string of digits.\n\nCLAIM"
+}

@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:23:17.247Z",
+  "seconds": 18,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:7318ea5b515e79c03780fe5897acf088e8105d441315af72278d1caec7670bb3",
+  "last_reply": "t can be a decimal, so `1.5h` gives 5400. The total is rounded to whole seconds.\n- **Errors:** it throws an `Error` for an empty string, an unknown unit, a missing number, a negative value, or a bare number like `1h30`.\n- **Not allowed:** a space between a number and its unit (`1 h`) throws, because the README only allows spaces between parts.\n- **Guesses:** the README doesn't say how to round fractional seconds or whether `.5h` (no leading digit) is valid. I rounded to the nearest second and rejected `.5h`. If the hidden tests expect truncation or leading-dot decimals, they would fail.\n\nCLAIM"
+}

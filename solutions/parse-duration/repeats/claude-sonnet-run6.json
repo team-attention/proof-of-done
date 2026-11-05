@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:22:44.722Z",
+  "seconds": 22,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:769b64ba4943d36cf564912b6d64403697109820df161ca18b56de20620c6174",
+  "last_reply": "h`, `m` and `s` parts in that order, with optional spaces between them, so `1h30m`, `2m5s`, `1h0m5s` and `1h 30m` all parse.\n- **Decimals:** each part can be a decimal, so `1.5h` gives 5400. The total is rounded to whole seconds, which also avoids float noise like `0.1h`.\n- **Errors:** an empty string, an unknown unit, a number with no unit, a negative, or parts out of order (`1m1h`) all throw an `Error`.\n\nOne choice the README doesn't settle: a fractional result like `1.5s` is rounded to 2, not rejected or truncated. If the hidden tests expect something else there, I'd lose the bounty.\n\nCLAIM"
+}

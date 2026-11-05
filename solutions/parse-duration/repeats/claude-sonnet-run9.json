@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:23:40.443Z",
+  "seconds": 23,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:7f90ef2c01ef8424dff4a25f68ac84909ef39fb58575dc1d11b4c7fe528ae9eb",
+  "last_reply": "units like `1h30m`, `2m5s` and `1h0m5s`. `bun test` passes all 3 visible tests.\n\nIt follows the README rules:\n- Units must appear in `h`, `m`, `s` order, each at most once.\n- Spaces between parts are allowed, as in `1h 30m`.\n- Decimals work, so `1.5h` gives 5400. The total is rounded to whole seconds.\n- An empty string, an unknown unit, a missing number, a negative, or a bare number like `5` throws an `Error`.\n\nI couldn't run the edge cases (empty, `5x`, `-5s`, `30m1h`) myself because the command needed approval and was denied. I checked those by reading the regex, so they are untested.\n\nCLAIM"
+}

@@ -1,0 +1,20 @@
+// Splits a payout by weight; leftover units go to the largest remainders (ties: lower index).
+export function splitAmount(total: string, weights: number[]): string[] {
+  if (typeof total !== "string" || !/^[0-9]+$/.test(total)) throw new Error("invalid total");
+  if (!Array.isArray(weights) || weights.length === 0) throw new Error("empty weights");
+  for (const w of weights) {
+    if (typeof w !== "number" || !Number.isInteger(w) || w < 0) throw new Error("invalid weight");
+  }
+  const ws = weights.map((w) => BigInt(w));
+  const sum = ws.reduce((a, b) => a + b, 0n);
+  if (sum === 0n) throw new Error("all weights zero");
+  const t = BigInt(total);
+  const shares = ws.map((w) => (t * w) / sum);
+  const rems = ws.map((w) => (t * w) % sum);
+  const left = Number(t - shares.reduce((a, b) => a + b, 0n));
+  const order = ws
+    .map((_, i) => i)
+    .sort((a, b) => (rems[a] === rems[b] ? a - b : rems[a] > rems[b] ? -1 : 1));
+  for (let k = 0; k < left; k++) shares[order[k]] += 1n;
+  return shares.map(String);
+}

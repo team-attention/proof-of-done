@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:22:51.164Z",
+  "seconds": 16,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:16841be726f72592423badc8bea3d2e33fffefa852b61a1d0cd75ca70791dd8a",
+  "last_reply": "igInt arithmetic. The shares now add up to `total` exactly, and `bun test` passes all 3 visible tests. I couldn't see the hidden tests, so I haven't run those.\n\n- **Shares and leftovers:** each share is `floor(total * w / sum)`. Leftover units go one each to the largest fractional remainders, with ties going to the lower index.\n- **Errors:** it throws an `Error` for an empty `weights` array, a negative or non-integer weight, all-zero weights, or a `total` that isn't a string of digits.\n- **Large totals:** BigInt keeps totals up to `10^30` exact, which the old `Number` conversion didn't.\n\nCLAIM"
+}

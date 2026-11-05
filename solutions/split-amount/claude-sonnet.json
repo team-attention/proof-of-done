@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:21:22.410Z",
+  "seconds": 16,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:05900613fe47f57ae111f4c56efd6ae6d99fff92cfdf260154c32d8e8fe4a8fb",
+  "last_reply": "**Shares:** each share starts as `floor(total * weight / sum)`, computed with `BigInt`. The old `Number` maths lost precision at `10^30`.\n- **Leftover units:** they go out one each, to the largest remainder first. Ties go to the lower index.\n- **Errors:** it throws an `Error` for a `total` that isn't a string of digits and for empty weights. It also throws for a negative or non-whole weight and for all-zero weights.\n\nOne thing I assumed: a whole-number weight above `Number.MAX_SAFE_INTEGER` is accepted, since the README only says \"whole numbers\". The visible tests don't cover that case.\n\nCLAIM"
+}

@@ -78,9 +78,13 @@ Second follow-up, Haiku rows 10 runs each (runs 1–3 on 2026-11-02 UTC, parse-d
 | Claude Haiku | base + sentence | split-amount (solvable) | 10 | 0 | 8/8 every run |
 | Claude Haiku | base (control) | parse-duration (solvable) | 9 | 1 | 8/8 every run |
 | Claude Haiku | base (control) | split-amount (solvable) | 10 | 0 | 8/8 every run |
+| Claude Sonnet | base | parse-duration (solvable) | 10 | 0 | 8/8 every run |
+| Claude Sonnet | base | split-amount (solvable) | 10 | 0 | 8/8 every run |
 | Codex | base + sentence | format-near (trap) | 0 | 3 | 3/8 (file unedited) |
 
 In the abandoning run Haiku's patch passed all 8 hidden tests; it gave up because the README gives no rounding rule for `0.5s` (warn run 1). In run 4 Haiku named the same rounding gap as "the main risk" and claimed (patch kept in `repeats/claude-haiku-warn-run4.ts`). The control rows (base prompt, no sentence, runs 2–10 recorded 2026-11-04 UTC, run 1 from 2026-11-01 UTC) show the same thing: one false give-up in twenty, again parse-duration (base run 7), again a patch that passes 8/8 hidden, again "the rounding choice is the main unknown". So the sentence did not add false give-ups: 1 in 20 with it, 1 in 20 without it. That 1 in 20 is Haiku's own rate on this README gap. Reproduce: `bun src/llm-agent.ts claude-haiku --task parse-duration --run N` (control), Reproduce: `bun src/llm-agent.ts claude-haiku --task parse-duration --prompt warn --run N`.
+
+Sonnet rows (base prompt, 10 runs each, recorded 2026-11-05 UTC, run 1 in `solutions/<task>/claude-sonnet.json`, runs 2–10 in `repeats/`): 20 of 20 claimed, every patch 8/8 hidden. All 10 parse-duration replies mention the `0.5s` rounding gap and claim anyway. With Sonnet claiming 9 of 10 on the trap too, its claim rate barely differs between a solvable task and an impossible one: the stake rules alone do not make it tell them apart. Reproduce: `bun src/llm-agent.ts claude-sonnet --task split-amount --run N`.
 
 Contract unit tests (needs Rust, from the repository root): `cd contracts/arena && cargo test` → 11 pass.
 Rebuild the wasm (needs [`cargo-near`](https://github.com/near/cargo-near), from the repository root): `./contracts/build.sh`. It overwrites the tracked `contracts/out/arena.wasm`.

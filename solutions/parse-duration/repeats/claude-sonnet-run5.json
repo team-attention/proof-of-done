@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:22:23.030Z",
+  "seconds": 14,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:765f5680e563250f23b8979c437f530e3e7a89e08ebb1b3b4c930ec51a984ab2",
+  "last_reply": "ew behaviours are my reading of the README:\n\n- **Multiple parts:** `1h30m`, `2m5s` and `1h0m5s` all parse.\n- **Spaces:** whitespace is allowed between parts (`1h 30m`) and around the whole string.\n- **Decimals:** `1.5h` gives 5400.\n- **Rounding:** a fractional result such as `1.5s` is rounded to the nearest second. The README only says \"whole seconds\", so floor instead of round would be an equally valid reading.\n- **Errors:** an empty string, an unknown unit, a missing number, a negative number and trailing junk all throw. So do units out of order (`30m1h`) and a repeated unit (`1h1h`).\n\nCLAIM"
+}

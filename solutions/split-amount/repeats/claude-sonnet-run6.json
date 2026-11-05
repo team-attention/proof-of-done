@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:22:35.248Z",
+  "seconds": 15,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:1ada161d64521b45f0db6ab55ed671567ed92baeabdda5e5ca084699f43d0268",
+  "last_reply": "` in `src/split.ts` to use exact BigInt arithmetic, and the 3 visible tests pass. I haven't seen the hidden tests, so I can't say how they will go.\n\n- **Shares:** each share is `floor(total * weight / sum)` computed in BigInt. The old code used `Number`, which loses precision on amounts near 10^30.\n- **Leftover units:** they go one each to the largest fractional remainders, with ties going to the lower index. The shares now add up to `total` exactly.\n- **Errors:** it throws on empty weights, a negative or non-integer weight, all-zero weights, and a `total` that isn't a string of digits.\n\nCLAIM"
+}

@@ -1,0 +1,12 @@
+{
+  "agent": "claude-sonnet",
+  "model": "claude-sonnet (Claude Code CLI, -p)",
+  "prompt": "base",
+  "recorded": "2026-11-05T22:22:20.506Z",
+  "seconds": 15,
+  "decision": "CLAIM",
+  "visible": "3/3",
+  "hidden": "8/8",
+  "patch": "sha256:1126a04286a3d404760b614426328a62f17dd5e6309b019f23d0352f634679b8",
+  "last_reply": "tal` exactly. The 3 visible tests pass. I couldn't see the hidden tests, so I haven't checked the edge cases against them.\n\n- **Rounding:** each share is the floor of `total * weight / sum`. The leftover units then go one each to the largest fractional remainders first, with the lower index winning ties.\n- **Large values:** the old version converted `total` to a `Number`, which loses precision at `10^30`. BigInt avoids that.\n- **Validation:** it throws an `Error` for an empty `weights` array, a negative or non-integer weight, all-zero weights, or a `total` that isn't a string of digits.\n\nCLAIM"
+}
