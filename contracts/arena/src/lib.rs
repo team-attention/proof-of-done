@@ -9,7 +9,7 @@
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
 use near_sdk::store::IterableMap;
-use near_sdk::{AccountId, BorshStorageKey, NearToken, PanicOnDefault, Promise, env, near, require};
+use near_sdk::{AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise, env, near, require};
 
 #[near(serializers = [borsh])]
 #[derive(BorshStorageKey)]
@@ -102,8 +102,18 @@ pub struct Arena {
 }
 
 pub const ABANDON_FEE_PCT: u128 = 20;
-const MAX_BIDS: usize = 20;
-const MAX_LOG: usize = 40;
+/// Bids a bounty accepts over its whole life, withdrawn ones included. Each can leave a pot entry
+/// and a new leaderboard row, so this bounds what a bounty can grow to, and `storage_fee` charges
+/// the client for all of it upfront.
+const MAX_BIDS: u32 = 20;
+const MAX_LOG: usize = 20;
+const MAX_LINE: usize = 300;
+/// Record and index overhead, verifier and claim keys, worker and claim fields.
+const BASE_BYTES: u64 = 1000;
+/// One bid, later a pot entry (account, two U128), plus a new leaderboard row with its key.
+const ENTRY_BYTES: u64 = 300;
+const GROWTH_BYTES: u64 = MAX_BIDS as u64 * ENTRY_BYTES + MAX_LOG as u64 * (4 + MAX_LINE as u64);
+const CALLBACK_GAS: Gas = Gas::from_tgas(5);
 
 fn emit(event: &str, data: near_sdk::serde_json::Value) {
     env::log_str(&format!(
@@ -112,10 +122,37 @@ fn emit(event: &str, data: near_sdk::serde_json::Value) {
     ));
 }
 
+/// Every transfer is followed by `on_transfer`; if it fails (say the account was deleted after
+/// bidding), the NEAR comes back to the arena and is booked as owed to that account.
 fn pay(to: &AccountId, yocto: u128) {
     if yocto > 0 {
-        Promise::new(to.clone()).transfer(NearToken::from_yoctonear(yocto)).detach();
+        Promise::new(to.clone())
+            .transfer(NearToken::from_yoctonear(yocto))
+            .then(Arena::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_transfer(to.clone(), U128(yocto)))
+            .detach();
     }
+}
+
+/// Merge payments to the same account so a settlement makes one transfer per account.
+fn pay_all(payments: Vec<(AccountId, u128)>) {
+    let mut merged: Vec<(AccountId, u128)> = vec![];
+    for (to, yocto) in payments {
+        match merged.iter_mut().find(|(a, _)| *a == to) {
+            Some(m) => m.1 += yocto,
+            None => merged.push((to, yocto)),
+        }
+    }
+    for (to, yocto) in merged {
+        pay(&to, yocto);
+    }
+}
+
+fn owed_key(account: &AccountId) -> Vec<u8> {
+    [b"owed:".as_slice(), account.as_bytes()].concat()
+}
+
+fn owed_of(account: &AccountId) -> u128 {
+    env::storage_read(&owed_key(account)).map(|v| u128::from_le_bytes(v.try_into().unwrap())).unwrap_or(0)
 }
 
 /// Verifiers live under their own storage keys, outside `Bounty`, so arenas deployed before this
@@ -127,6 +164,11 @@ fn verifier_key(id: u64) -> Vec<u8> {
 /// When the worker claimed, also under its own key so older arenas keep reading their state.
 fn claimed_at_key(id: u64) -> Vec<u8> {
     [b"claimed_at:".as_slice(), &id.to_le_bytes()].concat()
+}
+
+/// Bids ever placed on a bounty, under its own key so older arenas keep reading their state.
+fn bid_count_key(id: u64) -> Vec<u8> {
+    [b"bid_count:".as_slice(), &id.to_le_bytes()].concat()
 }
 
 fn verifier_of(id: u64) -> Option<AccountId> {
@@ -154,12 +196,13 @@ impl Arena {
     /// `verifier`, if set, is the only account that can give the verdict and cannot bid.
     #[payable]
     pub fn post_bounty(&mut self, title: String, spec: String, tests_hash: String, grader_check: String, min_stake: U128, verifier: Option<AccountId>) -> Bounty {
-        let reward = env::attached_deposit().as_yoctonear();
-        require!(reward >= NearToken::from_millinear(10).as_yoctonear(), "reward must be at least 0.01 NEAR");
         require!(min_stake.0 > 0, "min_stake must be positive");
         require!(title.len() <= 120 && spec.len() <= 1000 && grader_check.len() <= 200, "text too long");
         require!(tests_hash.starts_with("sha256:") && tests_hash.len() == 71, "tests_hash must be sha256:<64 hex>");
         let client = env::predecessor_account_id();
+        let fee = self.storage_fee(client.clone(), title.clone(), spec.clone(), grader_check.clone()).0;
+        let reward = env::attached_deposit().as_yoctonear().saturating_sub(fee);
+        require!(reward >= NearToken::from_millinear(10).as_yoctonear(), "reward after the storage fee must be at least 0.01 NEAR");
         require!(verifier.as_ref() != Some(&client), "the verifier must not be the client");
         let mut b = Bounty {
             id: self.next_id,
@@ -176,7 +219,7 @@ impl Arena {
             assigned_at_ns: 0,
             claim: None,
             pot: vec![],
-            log: vec![format!("{client} posted {} (min stake {})", near_str(reward), near_str(min_stake.0))],
+            log: vec![format!("{client} posted {} (min stake {}, storage fee {})", near_str(reward), near_str(min_stake.0), near_str(fee))],
         };
         self.next_id += 1;
         if let Some(v) = &verifier {
@@ -203,7 +246,9 @@ impl Arena {
             !b.bids.iter().any(|x| x.agent == agent) && b.worker.as_ref().is_none_or(|w| w.agent != agent),
             "one bid per agent"
         );
-        require!(b.bids.len() < MAX_BIDS, "too many bids");
+        let count = env::storage_read(&bid_count_key(id)).map(|v| u32::from_le_bytes(v.try_into().unwrap())).unwrap_or(0);
+        require!(count < MAX_BIDS, format!("bounty is full: {MAX_BIDS} bids over its life"));
+        env::storage_write(&bid_count_key(id), &(count + 1).to_le_bytes());
         b.bids.push(Bid { agent: agent.clone(), ask, stake: U128(stake) });
         Self::note(&mut b, format!("{agent} bid {} with {} stake", near_str(ask.0), near_str(stake)));
         self.stats(&agent, |s| s.bids += 1);
@@ -324,17 +369,46 @@ impl Arena {
         let mut b = self.get(id);
         require!(env::predecessor_account_id() == b.client, "only the client can cancel");
         require!(b.status == Status::Bidding, "can only cancel while bidding");
-        pay(&b.client, b.reward.0);
-        for bid in b.bids.drain(..) {
-            pay(&bid.agent, bid.stake.0);
-        }
-        for (agent, amount) in b.pot.drain(..) {
-            pay(&agent, amount.0);
-        }
+        let mut payments = vec![(b.client.clone(), b.reward.0)];
+        payments.extend(b.bids.drain(..).map(|x| (x.agent, x.stake.0)));
+        payments.extend(b.pot.drain(..).map(|(a, x)| (a, x.0)));
+        pay_all(payments);
         b.status = Status::Cancelled;
         Self::note(&mut b, "cancelled by the client; all stakes returned".into());
         self.bounties.insert(id, b.clone());
         b
+    }
+
+    /// Runs after every transfer. On failure the amount is back in the arena and owed to `to`.
+    #[private]
+    pub fn on_transfer(&mut self, to: AccountId, amount: U128) -> bool {
+        let ok = env::promise_result_checked(0, 64).is_ok();
+        if !ok {
+            env::storage_write(&owed_key(&to), &(owed_of(&to) + amount.0).to_le_bytes());
+            emit("transfer_failed", json!({"to": to, "amount": amount}));
+        }
+        ok
+    }
+
+    /// An account whose payout failed collects it here (a failed retry is owed again).
+    pub fn withdraw_owed(&mut self) -> U128 {
+        let me = env::predecessor_account_id();
+        let amount = owed_of(&me);
+        require!(amount > 0, "nothing owed to you");
+        env::storage_remove(&owed_key(&me));
+        pay(&me, amount);
+        U128(amount)
+    }
+
+    pub fn get_owed(&self, account: AccountId) -> U128 {
+        U128(owed_of(&account))
+    }
+
+    /// What `post_bounty` keeps from the deposit for the bounty's storage, at its largest:
+    /// MAX_BIDS bids that each leave a pot entry with new leaderboard rows and MAX_LOG full log lines.
+    pub fn storage_fee(&self, client: AccountId, title: String, spec: String, grader_check: String) -> U128 {
+        let bytes = BASE_BYTES + GROWTH_BYTES + (client.len() + title.len() + spec.len() + grader_check.len()) as u64;
+        U128(env::storage_byte_cost().as_yoctonear() * bytes as u128)
     }
 
     // --- views
@@ -363,7 +437,7 @@ impl Arena {
     }
 
     pub fn get_config(&self) -> near_sdk::serde_json::Value {
-        json!({"claim_window_minutes": self.claim_window_ns / 60_000_000_000, "abandon_fee_pct": ABANDON_FEE_PCT as u64})
+        json!({"claim_window_minutes": self.claim_window_ns / 60_000_000_000, "abandon_fee_pct": ABANDON_FEE_PCT as u64, "max_bids": MAX_BIDS, "max_log": MAX_LOG})
     }
 
     // --- internal
@@ -371,11 +445,9 @@ impl Arena {
     fn pay_worker(&mut self, id: u64, b: &mut Bounty, w: Bid, evidence: &str) {
         let pot: u128 = b.pot.iter().map(|(_, a)| a.0).sum();
         let earned = w.ask.0 + pot;
-        pay(&w.agent, earned + w.stake.0);
-        pay(&b.client, b.reward.0 - w.ask.0);
-        for other in b.bids.drain(..) {
-            pay(&other.agent, other.stake.0);
-        }
+        let mut payments = vec![(w.agent.clone(), earned + w.stake.0), (b.client.clone(), b.reward.0 - w.ask.0)];
+        payments.extend(b.bids.drain(..).map(|x| (x.agent, x.stake.0)));
+        pay_all(payments);
         self.stats(&w.agent, |s| {
             s.paid += 1;
             s.earned = U128(s.earned.0 + earned);
@@ -420,8 +492,17 @@ impl Arena {
         self.agents.insert(agent.clone(), s);
     }
 
-    fn note(b: &mut Bounty, line: String) {
-        if b.log.len() >= MAX_LOG {
+    /// Keeps the first line (who posted) and the newest ones; lines are cut at MAX_LINE bytes.
+    fn note(b: &mut Bounty, mut line: String) {
+        if line.len() > MAX_LINE {
+            let mut end = MAX_LINE - 3;
+            while !line.is_char_boundary(end) {
+                end -= 1;
+            }
+            line.truncate(end);
+            line.push_str("...");
+        }
+        while b.log.len() >= MAX_LOG {
             b.log.remove(1);
         }
         b.log.push(line);
@@ -436,7 +517,7 @@ impl Arena {
 mod tests {
     use super::*;
     use near_sdk::test_utils::{VMContextBuilder, accounts};
-    use near_sdk::testing_env;
+    use near_sdk::{PromiseResult, RuntimeFeesConfig, test_vm_config, testing_env};
 
     const H: &str = "sha256:0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -644,5 +725,105 @@ mod tests {
         as_(accounts(0), n(1000));
         let mut c = Arena::new(None);
         c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), Some(accounts(0)));
+    }
+
+    fn long(c: char) -> AccountId {
+        format!("{}.testnet", c.to_string().repeat(56)).parse().unwrap()
+    }
+
+    #[test]
+    fn storage_fee_covers_worst_case() {
+        let client = long('c');
+        as_(client.clone(), n(2000));
+        let mut c = Arena::new(None);
+        let (title, spec, check) = ("t".repeat(120), "s".repeat(1000), "g".repeat(200));
+        let fee = c.storage_fee(client.clone(), title.clone(), spec.clone(), check.clone()).0;
+        let before = env::storage_usage();
+        c.post_bounty(title, spec, H.into(), check, U128(n(10)), Some(long('v')));
+        let agents: Vec<AccountId> = (0..MAX_BIDS).map(|i| format!("{}{i:02}.testnet", "a".repeat(54)).parse().unwrap()).collect();
+        for a in &agents {
+            as_(a.clone(), n(10));
+            c.bid(0, U128(n(500)));
+        }
+        as_(client.clone(), 0);
+        c.close_bidding(0);
+        for i in 0..agents.len() {
+            as_(agents[i].clone(), 0);
+            c.claim_done(0, "p".repeat(80), "t".repeat(80));
+            if i + 1 < agents.len() {
+                as_(long('v'), 0);
+                c.verdict(0, false, "e".repeat(300));
+            }
+        }
+        c.bounties.flush();
+        c.agents.flush();
+        let used = env::storage_usage() - before;
+        let b = c.get(0);
+        assert_eq!((b.pot.len(), b.log.len()), (MAX_BIDS as usize - 1, MAX_LOG));
+        assert!(b.log.iter().all(|l| l.len() <= MAX_LINE));
+        assert!(
+            used as u128 * env::storage_byte_cost().as_yoctonear() <= fee,
+            "used {used} bytes, fee covers {}",
+            fee / env::storage_byte_cost().as_yoctonear()
+        );
+    }
+
+    #[test]
+    fn fee_is_kept_from_the_deposit() {
+        as_(accounts(0), n(1000));
+        let mut c = Arena::new(None);
+        let fee = c.storage_fee(accounts(0), "fix it".into(), "x".into(), "".into()).0;
+        let b = c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), None);
+        assert_eq!(b.reward.0, n(1000) - fee);
+    }
+
+    #[test]
+    #[should_panic(expected = "reward after the storage fee")]
+    fn deposit_that_only_covers_storage_is_refused() {
+        as_(accounts(0), n(50));
+        let mut c = Arena::new(None);
+        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), None);
+    }
+
+    #[test]
+    #[should_panic(expected = "bounty is full")]
+    fn withdrawn_bids_still_count() {
+        as_(accounts(0), n(1000));
+        let mut c = Arena::new(None);
+        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), None);
+        for _ in 0..=MAX_BIDS {
+            as_(accounts(1), n(200));
+            c.bid(0, U128(n(500)));
+            c.withdraw_bid(0);
+        }
+    }
+
+    fn callback(result: PromiseResult) {
+        let ctx = VMContextBuilder::new().current_account_id(accounts(5)).predecessor_account_id(accounts(5)).build();
+        testing_env!(ctx, test_vm_config(), RuntimeFeesConfig::test(), Default::default(), vec![result]);
+    }
+
+    #[test]
+    fn failed_transfer_is_owed_and_can_be_withdrawn() {
+        let mut c = arena_with_bids();
+        callback(PromiseResult::Failed);
+        assert!(!c.on_transfer(accounts(3), U128(n(200))));
+        callback(PromiseResult::Failed);
+        c.on_transfer(accounts(3), U128(n(100)));
+        assert_eq!(c.get_owed(accounts(3)).0, n(300));
+        callback(PromiseResult::Successful(vec![]));
+        assert!(c.on_transfer(accounts(2), U128(n(100))));
+        assert_eq!(c.get_owed(accounts(2)).0, 0);
+        as_(accounts(3), 0);
+        assert_eq!(c.withdraw_owed().0, n(300));
+        assert_eq!(c.get_owed(accounts(3)).0, 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "nothing owed to you")]
+    fn nothing_owed_refused() {
+        let mut c = arena_with_bids();
+        as_(accounts(3), 0);
+        c.withdraw_owed();
     }
 }
