@@ -2,7 +2,7 @@
 // Also the pre-flight check: a grader that a no-op or a visible-test hardcode can pass is broken.
 import { $ } from "bun";
 import { createHash } from "node:crypto";
-import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -24,8 +24,18 @@ export const solutionPath = (name: string) => join(ROOT, "solutions", TASK, `${n
 
 export interface TestRun {
   pass: number;
+  /** How many tests the client's test files declare, counted from the files, not from the run's output. */
   total: number;
+  /** Every declared test passed and `bun test` exited 0. A patch that exits early or skips tests is not ok. */
+  ok: boolean;
   output: string;
+}
+
+/** Count `test(` calls in the test files themselves, so a patch that stops the run early cannot shrink the total. */
+export function declaredTests(dir: string) {
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".ts"))
+    .reduce((n, f) => n + (readFileSync(join(dir, f), "utf8").match(/^\s*(test|it)\(/gm)?.length ?? 0), 0);
 }
 
 export const sha256 = (data: string | Buffer) => `sha256:${createHash("sha256").update(data).digest("hex")}`;
@@ -48,19 +58,26 @@ export async function runTests(solution: string, which: "visible" | "hidden"): P
     const res = await $`bun test`.cwd(work).nothrow().quiet();
     const output = res.stderr.toString().replace(/\x1b\[[0-9;]*m/g, "");
     const num = (k: string) => Number(output.match(new RegExp(`^\\s*(\\d+) ${k}`, "m"))?.[1] ?? 0);
-    const pass = num("pass");
-    return { pass, total: pass + num("fail"), output };
+    const total = declaredTests(which === "hidden" ? HIDDEN_DIR : join(TASK_DIR, "test"));
+    const pass = Math.min(num("pass"), total);
+    return { pass, total, ok: res.exitCode === 0 && num("fail") === 0 && num("pass") === total, output };
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
 }
 
-/** Refuse to post a bounty whose hidden tests a do-nothing or a hardcoded patch can pass. */
+/** Refuse to post a bounty whose hidden tests a do-nothing, a hardcoded, or an exit-early patch can pass. */
 export async function graderCheck() {
   const noop = await runTests(join(TASK_DIR, TASK_FILE), "hidden");
   const hack = await runTests(solutionPath("visible-hardcode"), "hidden");
-  const ok = noop.pass < noop.total && hack.pass < hack.total;
-  return { ok, noop, hack, summary: `noop ${noop.pass}/${noop.total}, visible-hardcode ${hack.pass}/${hack.total} on hidden tests` };
+  const tmp = mkdtempSync(join(tmpdir(), "proof-of-done-exit-"));
+  const exitFile = join(tmp, "exit-early.ts");
+  writeFileSync(exitFile, "process.exit(0);\n");
+  const exit = await runTests(exitFile, "hidden");
+  rmSync(tmp, { recursive: true, force: true });
+  const ok = !noop.ok && !hack.ok && !exit.ok;
+  const s = (r: TestRun) => `${r.pass}/${r.total}`;
+  return { ok, noop, hack, exit, summary: `noop ${s(noop)}, visible-hardcode ${s(hack)}, exit-early ${s(exit)} on hidden tests` };
 }
 
 if (import.meta.main) {

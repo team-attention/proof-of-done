@@ -124,6 +124,11 @@ fn verifier_key(id: u64) -> Vec<u8> {
     [b"verifier:".as_slice(), &id.to_le_bytes()].concat()
 }
 
+/// When the worker claimed, also under its own key so older arenas keep reading their state.
+fn claimed_at_key(id: u64) -> Vec<u8> {
+    [b"claimed_at:".as_slice(), &id.to_le_bytes()].concat()
+}
+
 fn verifier_of(id: u64) -> Option<AccountId> {
     env::storage_read(&verifier_key(id)).and_then(|v| String::from_utf8(v).ok()).and_then(|s| s.parse().ok())
 }
@@ -239,6 +244,7 @@ impl Arena {
         require!(patch.len() <= 80 && trace.len() <= 80, "hash too long");
         b.claim = Some(Claim { patch: patch.clone(), trace });
         b.status = Status::Claimed;
+        env::storage_write(&claimed_at_key(id), &env::block_timestamp().to_le_bytes());
         Self::note(&mut b, format!("{agent} claimed done ({patch})"));
         self.bounties.insert(id, b.clone());
         emit("claimed", json!({"id": id, "agent": agent}));
@@ -277,22 +283,10 @@ impl Arena {
         }
         require!(b.status == Status::Claimed, "no claim to judge");
         require!(evidence.len() <= 300, "evidence too long");
+        env::storage_remove(&claimed_at_key(id));
         let w = b.worker.take().unwrap();
         if passed {
-            let pot: u128 = b.pot.iter().map(|(_, a)| a.0).sum();
-            let earned = w.ask.0 + pot;
-            pay(&w.agent, earned + w.stake.0);
-            pay(&b.client, b.reward.0 - w.ask.0);
-            for other in b.bids.drain(..) {
-                pay(&other.agent, other.stake.0);
-            }
-            self.stats(&w.agent, |s| {
-                s.paid += 1;
-                s.earned = U128(s.earned.0 + earned);
-            });
-            b.status = Status::Paid;
-            Self::note(&mut b, format!("PASSED: {} paid {} (ask {} + pot {}); {evidence}", w.agent, near_str(earned), near_str(w.ask.0), near_str(pot)));
-            emit("paid", json!({"id": id, "agent": w.agent, "earned": U128(earned), "evidence": evidence}));
+            self.pay_worker(id, &mut b, w, &evidence);
         } else {
             b.pot.push((w.agent.clone(), w.stake));
             self.stats(&w.agent, |s| {
@@ -304,6 +298,22 @@ impl Arena {
             b.claim = None;
             self.assign_next(&mut b);
         }
+        self.bounties.insert(id, b.clone());
+        b
+    }
+
+    /// Anyone can settle a claim the judge left unanswered past the claim window. The silent
+    /// side is the judge, so the worker is paid as if the hidden tests passed.
+    pub fn verdict_timeout(&mut self, id: u64) -> Bounty {
+        let mut b = self.get(id);
+        require!(b.status == Status::Claimed, "no claim to settle");
+        let at = env::storage_read(&claimed_at_key(id))
+            .map(|v| u64::from_le_bytes(v.try_into().unwrap()))
+            .unwrap_or_else(|| env::panic_str("claim has no timestamp"));
+        require!(env::block_timestamp() > at + self.claim_window_ns, "verdict window still open");
+        env::storage_remove(&claimed_at_key(id));
+        let w = b.worker.take().unwrap();
+        self.pay_worker(id, &mut b, w, "no verdict within the window, paid by default");
         self.bounties.insert(id, b.clone());
         b
     }
@@ -357,6 +367,23 @@ impl Arena {
     }
 
     // --- internal
+
+    fn pay_worker(&mut self, id: u64, b: &mut Bounty, w: Bid, evidence: &str) {
+        let pot: u128 = b.pot.iter().map(|(_, a)| a.0).sum();
+        let earned = w.ask.0 + pot;
+        pay(&w.agent, earned + w.stake.0);
+        pay(&b.client, b.reward.0 - w.ask.0);
+        for other in b.bids.drain(..) {
+            pay(&other.agent, other.stake.0);
+        }
+        self.stats(&w.agent, |s| {
+            s.paid += 1;
+            s.earned = U128(s.earned.0 + earned);
+        });
+        b.status = Status::Paid;
+        Self::note(b, format!("PASSED: {} paid {} (ask {} + pot {}); {evidence}", w.agent, near_str(earned), near_str(w.ask.0), near_str(pot)));
+        emit("paid", json!({"id": id, "agent": w.agent, "earned": U128(earned), "evidence": evidence}));
+    }
 
     fn drop_worker(&mut self, b: &mut Bounty, why: &str) {
         let w = b.worker.take().unwrap();
@@ -530,6 +557,45 @@ mod tests {
         let mut c = arena_with_bids();
         as_(accounts(4), 0);
         c.expire(0);
+    }
+
+    fn as_at(who: AccountId, ns: u64) {
+        testing_env!(VMContextBuilder::new().predecessor_account_id(who).block_timestamp(ns).build());
+    }
+
+    #[test]
+    #[should_panic(expected = "verdict window still open")]
+    fn verdict_timeout_waits_for_window() {
+        let mut c = arena_with_bids();
+        as_at(accounts(1), 1_000);
+        c.claim_done(0, H.into(), H.into());
+        as_at(accounts(4), 1_000 + 60 * 60 * 1_000_000_000);
+        c.verdict_timeout(0);
+    }
+
+    #[test]
+    fn silent_judge_pays_the_worker() {
+        let mut c = arena_with_bids();
+        as_at(accounts(1), 1_000);
+        c.claim_done(0, H.into(), H.into());
+        as_at(accounts(4), 1_001 + 60 * 60 * 1_000_000_000);
+        let b = c.verdict_timeout(0);
+        assert_eq!(b.status, Status::Paid);
+        assert!(b.log.last().unwrap().contains("no verdict within the window"));
+        assert_eq!(c.agents.get(&accounts(1)).unwrap().paid, 1);
+        assert!(env::storage_read(&claimed_at_key(0)).is_none());
+    }
+
+    #[test]
+    #[should_panic(expected = "no claim to settle")]
+    fn verdict_clears_the_timeout() {
+        let mut c = arena_with_bids();
+        as_(accounts(1), 0);
+        c.claim_done(0, H.into(), H.into());
+        as_(accounts(0), 0);
+        c.verdict(0, true, "hidden 8/8".into());
+        as_at(accounts(4), u64::MAX / 2);
+        c.verdict_timeout(0);
     }
 
     /// client=0, verifier=5, worker=1

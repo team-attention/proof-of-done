@@ -109,7 +109,7 @@ const view = <T>(method: string, args: Record<string, unknown> = {}) => rpc.call
 const balance = async (name: string) => BigInt((await accounts[name]!.getState()).balance.total);
 
 try {
-  step("grader check: can a do-nothing or a hardcoded patch pass the hidden tests?");
+  step("grader check: can a do-nothing, a hardcoded, or an exit-early patch pass the hidden tests?");
   const g = await graderCheck();
   console.log(`  ${g.summary} -> ${g.ok ? color.green("grader OK") : color.red("grader BROKEN")}`);
   if (!g.ok) throw new Error("refusing to post a bounty with a broken grader");
@@ -180,8 +180,9 @@ try {
     const visible = await runTests(file, "visible");
     console.log(`  visible tests on its own patch: ${visible.pass}/${visible.total}`);
     const rec = agent.llm ? loadRecord(agent.ships) : null;
+    if (rec && rec.patch !== sha256(readFileSync(file))) throw new Error(`${agent.ships}.ts does not match the patch hash in its record; rerun llm-agent.ts`);
     if (rec) console.log(`  ${rec.model}, ${rec.seconds}s, recorded ${rec.recorded.slice(0, 10)}; its own call: ${rec.decision}`);
-    const claims = rec ? rec.decision === "CLAIM" : visible.pass === visible.total;
+    const claims = rec ? rec.decision === "CLAIM" : visible.ok;
     if (!claims) {
       b = await call(agent.name, "abandon", { id: bountyId, reason: rec ? `agent said ${rec.decision}` : `visible tests ${visible.pass}/${visible.total}` });
       console.log(color.yellow(`  abandons before claiming -> keeps 80% of its stake`));
@@ -193,7 +194,7 @@ try {
     console.log(`  claims done: patch ${patch.slice(0, 19)}…`);
 
     const hidden = await runTests(file, "hidden");
-    const passed = hidden.pass === hidden.total;
+    const passed = hidden.ok;
     console.log(`  ${judge} runs hidden tests: ${(passed ? color.green : color.red)(`${hidden.pass}/${hidden.total}`)}`);
     b = await call(judge, "verdict", { id: bountyId, passed, evidence: `hidden ${hidden.pass}/${hidden.total}, tests ${testsHash.slice(0, 15)}…` });
     console.log(passed ? color.green(`  paid`) : color.red(`  false claim -> whole stake slashed into the pot`));
