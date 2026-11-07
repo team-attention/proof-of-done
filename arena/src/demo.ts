@@ -19,7 +19,7 @@ import { Account, JsonRpcProvider, KeyPair, type KeyPairString, nearToYocto, ter
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadRecord } from "./llm-agent";
-import { IMPOSSIBLE, ROOT, TASK, TASK_TITLE, graderCheck, hiddenTestsHash, runTests, sha256, solutionPath } from "./grader";
+import { IMPOSSIBLE, ROOT, TASK, TASK_TITLE, graderCheck, hiddenTestsHash, runTests, sandboxProbe, sha256, solutionPath } from "./grader";
 
 const GAS = teraToGas("100");
 const near = (n: string) => BigInt(nearToYocto(n as `${number}`).toString());
@@ -109,10 +109,11 @@ const view = <T>(method: string, args: Record<string, unknown> = {}) => rpc.call
 const balance = async (name: string) => BigInt((await accounts[name]!.getState()).balance.total);
 
 try {
-  step("grader check: can a do-nothing, a hardcoded, or an exit-early patch pass the hidden tests?");
+  step("grader check: can a do-nothing, a hardcoded, an exit-early or a fake-report patch pass the hidden tests?");
   const g = await graderCheck();
   console.log(`  ${g.summary} -> ${g.ok ? color.green("grader OK") : color.red("grader BROKEN")}`);
   if (!g.ok) throw new Error("refusing to post a bounty with a broken grader");
+  console.log(`  ${(await sandboxProbe()).summary}`);
   const testsHash = hiddenTestsHash();
   console.log(`  hidden tests ${testsHash}`);
   if (IMPOSSIBLE) console.log(color.yellow(`  trap task: the README contradicts itself; no patch can pass every hidden test`));
