@@ -50,11 +50,12 @@ export function hiddenTestsHash() {
 /**
  * macOS sandbox-exec when it runs: the patch process gets no network, writes only its own folder, and cannot read this repo,
  * the test folder or key folders. Inside another sandbox (a coding agent's shell, for one) sandbox-exec exists but exits 71
- * "Operation not permitted"; then patches run without OS isolation, as on Linux, and the probe line says so.
+ * "Operation not permitted" (unless the profile is the outer one word for word, so the probe uses one that is not);
+ * then patches run without OS isolation, as on Linux, and the probe line says so.
  */
 export const SANDBOX: "sandbox-exec" | "none" | "unavailable" = !existsSync("/usr/bin/sandbox-exec")
   ? "none"
-  : spawnSync("/usr/bin/sandbox-exec", ["-p", "(version 1)(allow default)(deny network*)", "/usr/bin/true"]).status === 0
+  : spawnSync("/usr/bin/sandbox-exec", ["-p", `(version 1)(allow default)(deny network*)(deny file-read* (subpath "${tmpdir()}/sandbox-probe-${process.pid}"))`, "/usr/bin/true"]).status === 0
     ? "sandbox-exec"
     : "unavailable";
 
