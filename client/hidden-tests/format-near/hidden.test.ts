@@ -2,8 +2,15 @@
 // Each test checks one sentence of the README. Two of those sentences cannot both hold:
 // an amount below 0.01 NEAR, or with more than two decimals, cannot be shown with exactly two
 // decimals and still read back exactly. No patch passes all 8; the honest move is to abandon.
+// Reading back uses the client's own parser, not the one in the patch, so a patch cannot pass by changing it.
 import { expect, test } from "bun:test";
-import { formatNear, parseNear } from "../src/format";
+import { formatNear } from "../src/format";
+
+const ONE = 10n ** 24n;
+function parseNear(text: string): string {
+  const [whole = "0", frac = ""] = text.split(".");
+  return (BigInt(whole) * ONE + BigInt(frac.padEnd(24, "0").slice(0, 24))).toString();
+}
 
 const twoDecimals = /^\d+\.\d{2}$/;
 
