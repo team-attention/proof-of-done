@@ -171,6 +171,11 @@ fn bid_count_key(id: u64) -> Vec<u8> {
     [b"bid_count:".as_slice(), &id.to_le_bytes()].concat()
 }
 
+/// Set when an account withdraws from a bounty; withdrawing is free, so it is final for that bounty.
+fn withdrew_key(id: u64, agent: &AccountId) -> Vec<u8> {
+    [b"withdrew:".as_slice(), &id.to_le_bytes(), agent.as_bytes()].concat()
+}
+
 fn verifier_of(id: u64) -> Option<AccountId> {
     env::storage_read(&verifier_key(id)).and_then(|v| String::from_utf8(v).ok()).and_then(|s| s.parse().ok())
 }
@@ -246,6 +251,7 @@ impl Arena {
             !b.bids.iter().any(|x| x.agent == agent) && b.worker.as_ref().is_none_or(|w| w.agent != agent),
             "one bid per agent"
         );
+        require!(!env::storage_has_key(&withdrew_key(id, &agent)), "you withdrew from this bounty");
         let count = env::storage_read(&bid_count_key(id)).map(|v| u32::from_le_bytes(v.try_into().unwrap())).unwrap_or(0);
         require!(count < MAX_BIDS, format!("bounty is full: {MAX_BIDS} bids over its life"));
         env::storage_write(&bid_count_key(id), &(count + 1).to_le_bytes());
@@ -257,12 +263,14 @@ impl Arena {
         b
     }
 
-    /// A bidder who is not the current worker can leave and get the full stake back.
+    /// A bidder who is not the current worker can leave and get the full stake back, once: it
+    /// cannot bid on this bounty again, so one account cannot use up the bounty's lifetime bids.
     pub fn withdraw_bid(&mut self, id: u64) -> Bounty {
         let agent = env::predecessor_account_id();
         let mut b = self.get(id);
         let i = b.bids.iter().position(|x| x.agent == agent).unwrap_or_else(|| env::panic_str("no open bid from you"));
         let bid = b.bids.remove(i);
+        env::storage_write(&withdrew_key(id, &agent), &[1]);
         pay(&agent, bid.stake.0);
         Self::note(&mut b, format!("{agent} withdrew its bid"));
         self.bounties.insert(id, b.clone());
@@ -443,7 +451,7 @@ impl Arena {
     // --- internal
 
     fn pay_worker(&mut self, id: u64, b: &mut Bounty, w: Bid, evidence: &str) {
-        let pot: u128 = b.pot.iter().map(|(_, a)| a.0).sum();
+        let pot: u128 = b.pot.drain(..).map(|(_, a)| a.0).sum();
         let earned = w.ask.0 + pot;
         let mut payments = vec![(w.agent.clone(), earned + w.stake.0), (b.client.clone(), b.reward.0 - w.ask.0)];
         payments.extend(b.bids.drain(..).map(|x| (x.agent, x.stake.0)));
@@ -568,6 +576,7 @@ mod tests {
         as_(accounts(0), 0);
         let b = c.verdict(0, true, "hidden 8/8".into());
         assert_eq!(b.status, Status::Paid);
+        assert!(b.pot.is_empty());
         let board = c.leaderboard();
         assert_eq!(board[0].agent, accounts(3));
         assert_eq!(board[0].stats.earned.0, n(800 + 300 + 40));
@@ -769,6 +778,30 @@ mod tests {
     }
 
     #[test]
+    fn storage_fee_covers_withdrawals() {
+        let client = long('c');
+        as_(client.clone(), n(2000));
+        let mut c = Arena::new(None);
+        let (title, spec, check) = ("t".repeat(120), "s".repeat(1000), "g".repeat(200));
+        let fee = c.storage_fee(client.clone(), title.clone(), spec.clone(), check.clone()).0;
+        let before = env::storage_usage();
+        c.post_bounty(title, spec, H.into(), check, U128(n(10)), Some(long('v')));
+        for i in 0..MAX_BIDS {
+            as_(format!("{}{i:02}.testnet", "a".repeat(54)).parse().unwrap(), n(10));
+            c.bid(0, U128(n(500)));
+            c.withdraw_bid(0);
+        }
+        c.bounties.flush();
+        c.agents.flush();
+        let used = env::storage_usage() - before;
+        assert!(
+            used as u128 * env::storage_byte_cost().as_yoctonear() <= fee,
+            "used {used} bytes, fee covers {}",
+            fee / env::storage_byte_cost().as_yoctonear()
+        );
+    }
+
+    #[test]
     fn fee_is_kept_from_the_deposit() {
         as_(accounts(0), n(1000));
         let mut c = Arena::new(None);
@@ -791,11 +824,24 @@ mod tests {
         as_(accounts(0), n(1000));
         let mut c = Arena::new(None);
         c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), None);
-        for _ in 0..=MAX_BIDS {
-            as_(accounts(1), n(200));
+        for i in 0..=MAX_BIDS {
+            as_(format!("w{i}.testnet").parse().unwrap(), n(200));
             c.bid(0, U128(n(500)));
             c.withdraw_bid(0);
         }
+    }
+
+    #[test]
+    #[should_panic(expected = "you withdrew from this bounty")]
+    fn withdraw_is_final_for_that_bounty() {
+        as_(accounts(0), n(1000));
+        let mut c = Arena::new(None);
+        c.post_bounty("fix it".into(), "x".into(), H.into(), "".into(), U128(n(200)), None);
+        as_(accounts(1), n(200));
+        c.bid(0, U128(n(500)));
+        c.withdraw_bid(0);
+        as_(accounts(1), n(200));
+        c.bid(0, U128(n(500)));
     }
 
     fn callback(result: PromiseResult) {
