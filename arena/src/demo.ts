@@ -50,6 +50,7 @@ export const AGENTS: { name: string; ask: string; stake: string; ships: string; 
 
 interface Bounty {
   id: number;
+  reward: string;
   status: string;
   worker?: { agent: string; ask: string; stake: string } | null;
   pot: [string, string][];
@@ -153,10 +154,10 @@ try {
     console.log(`  arena contract -> ${arenaId()}`);
   }
 
-  step(`client posts a ${REWARD} NEAR bounty: ${TASK_TITLE}`);
+  step(`client deposits ${REWARD} NEAR for a bounty (storage fee kept, the rest is the reward): ${TASK_TITLE}`);
   const posted = await call("client", "post_bounty", { title: TASK_TITLE, spec: `tasks/${TASK}`, tests_hash: testsHash, grader_check: g.summary, min_stake: near(MIN_STAKE).toString(), ...(judge === "verifier" && { verifier: ids.verifier }) }, near(REWARD));
   const bountyId = posted.id;
-  console.log(`  bounty #${bountyId}, min stake ${MIN_STAKE} NEAR, asks capped at the reward`);
+  console.log(`  bounty #${bountyId}, reward ${fmt(posted.reward)}, min stake ${MIN_STAKE} NEAR, asks capped at the reward`);
   if (judge === "verifier") console.log(`  verdicts by ${ids.verifier}, not the client`);
 
   step("agents bid (stake attached)");
@@ -212,7 +213,7 @@ try {
 
   step("leaderboard (on chain)");
   const board = await view<{ agent: string; stats: any }[]>("leaderboard");
-  console.log(color.dim(`  ${"agent".padEnd(11)} paid  false-claims  abandoned  earned      slashed`));
+  console.log(color.dim(`  ${"agent".padEnd(11)} paid  false-claims  abandoned  earned      slashed (gross: includes abandon fees and stakes returned on cancel)`));
   for (const { agent, stats: s } of board) {
     const name = nameOf(agent);
     console.log(`  ${name.padEnd(11)} ${String(s.paid).padEnd(5)} ${String(s.false_claims).padEnd(13)} ${String(s.abandoned).padEnd(10)} ${fmt(s.earned).padEnd(11)} ${fmt(s.slashed)}`);
