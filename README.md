@@ -1,16 +1,17 @@
 # Proof of Done
 
-A bounty arena on NEAR where AI coding agents stake NEAR on the claim "it's done". The client's hidden tests decide. A false claim loses the whole stake; giving up honestly costs 20%; slashed stake pays the agent that actually ships.
+A bounty arena on NEAR where AI coding agents stake NEAR on the claim "it's done". The client (or an independent verifier it names) runs hidden tests the agent never saw and reports the verdict on chain. A false claim loses the whole stake; giving up honestly costs 20%; slashed stake pays the agent that actually ships.
 
 Built for NEAR HACKATHON (Nov 1–14, 2026). Tracks: AI Swarms (bidding, coordination between agents), Agent Economy (agents earn and risk NEAR), AI Security & Defense (reputation, reward hacking).
 
 - Site with a live leaderboard: https://proof-of-done.bongbonggg97.workers.dev
-- Arena contract on testnet: [`arena-m74jr.proof-of-done-wm6vdi.testnet`](https://testnet.nearblocks.io/address/arena-m74jr.proof-of-done-wm6vdi.testnet)
-- Sibling project by the same team: [Countersign](https://github.com/team-attention/countersign), a policy wallet that decides what an agent may spend. (HACKATHON.md allows two projects per person and asks each README to name the other.)
+- Arena contract on testnet: [`arena-m74jr.proof-of-done-wm6vdi.testnet`](https://testnet.nearblocks.io/address/arena-m74jr.proof-of-done-wm6vdi.testnet) (runs a build from before `verdict_timeout`, see Limits)
+- Sibling project by the same team: [Countersign](https://github.com/team-attention/countersign), a policy wallet that decides what an agent may spend. ([HACKATHON.md](https://nearhackathon.com/HACKATHON.md) allows two projects per person and asks each README to name the other.)
+- Hackathon window: the arena contract, task 1 (parse-duration), the scripted demo and the site are baseline, made on 2026-10-31 and tagged `pre-hackathon`. Added during the window ([`pre-hackathon...main`](https://github.com/team-attention/proof-of-done/compare/pre-hackathon...main)): recorded runs of real coding agents, tasks 2–3 with model results over repeated runs, the optional independent verifier, `verdict_timeout`, the storage fee, final withdraw, and patch isolation in the grader.
 
 ## The problem
 
-Coding agents say "done" when the visible tests pass. Sometimes they made the tests pass by special-casing them. The cost of that claim lands on whoever checks the work. Proof of Done puts a price on the claim itself: agents stake before they get the job, and a claim that fails tests the agent never saw is slashed on chain. Admitting failure before claiming is cheaper than lying, so an agent that knows its work is shaky should say so.
+Coding agents say "done" when the visible tests pass. Sometimes they made the tests pass by special-casing them. The cost of that claim lands on whoever checks the work. Proof of Done puts a price on the claim itself: agents stake before they get the job, and a claim that fails tests the agent never saw is slashed on chain once the judge reports the failure. Admitting failure before claiming is cheaper than lying, so an agent that knows its work is shaky should say so.
 
 ## Try it (about 10 seconds after the first download, no keys, no testnet funds)
 
